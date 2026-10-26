@@ -91,6 +91,8 @@ const es = {
     escala: 'Muebles a escala real',
     estancias: { cerca: 'De cerca', salon: 'Salón', dormitorio: 'Dormitorio', infantil: 'Infantil', comedor: 'Comedor', recibidor: 'Recibidor', despacho: 'Despacho', bano: 'Baño' },
     pedir: 'Pedir este tapiz',
+    compartir: 'Compartir imagen',
+    compartirTexto: 'Mira el tapiz que he diseñado en Linum Estudio',
     nota: 'Precio de referencia del catálogo 2026. Te confirmamos el presupuesto antes de empezar.',
     mensaje: (o: { diptico: boolean; tela: string; medida: string; marco: string | null }) =>
       `Hola, Linum. Me interesa ${o.diptico ? 'un díptico' : 'un tapiz'} con la tela ${o.tela}, de ${o.medida} cm, ` +
@@ -199,6 +201,8 @@ const en: Diccionario = {
     escala: 'Furniture shown to scale',
     estancias: { cerca: 'Close-up', salon: 'Living room', dormitorio: 'Bedroom', infantil: 'Kids’ room', comedor: 'Dining room', recibidor: 'Entryway', despacho: 'Study', bano: 'Bathroom' },
     pedir: 'Order this piece',
+    compartir: 'Share image',
+    compartirTexto: 'Here’s the piece I designed at Linum Estudio',
     nota: 'Reference price from the 2026 catalogue. We confirm the quote before we start.',
     mensaje: (o) =>
       `Hello Linum, I’m interested in ${o.diptico ? 'a diptych' : 'a piece'} in the ${o.tela} fabric, ${o.medida} cm, ` +
@@ -305,6 +309,8 @@ const de: Diccionario = {
     escala: 'Möbel maßstabsgetreu',
     estancias: { cerca: 'Nahansicht', salon: 'Wohnzimmer', dormitorio: 'Schlafzimmer', infantil: 'Kinderzimmer', comedor: 'Esszimmer', recibidor: 'Flur', despacho: 'Arbeitszimmer', bano: 'Bad' },
     pedir: 'Dieses Stoffbild anfragen',
+    compartir: 'Bild teilen',
+    compartirTexto: 'Schau, welches Stoffbild ich bei Linum Estudio gestaltet habe',
     nota: 'Richtpreis laut Katalog 2026. Wir bestätigen das Angebot, bevor wir beginnen.',
     mensaje: (o) =>
       `Hallo Linum, ich interessiere mich für ${o.diptico ? 'ein Diptychon' : 'ein Stoffbild'} mit dem Stoff ${o.tela}, ${o.medida} cm, ` +
@@ -411,6 +417,8 @@ const fr: Diccionario = {
     escala: 'Meubles à l’échelle',
     estancias: { cerca: 'Gros plan', salon: 'Salon', dormitorio: 'Chambre', infantil: 'Chambre d’enfant', comedor: 'Salle à manger', recibidor: 'Entrée', despacho: 'Bureau', bano: 'Salle de bains' },
     pedir: 'Commander ce tableau',
+    compartir: 'Partager l’image',
+    compartirTexto: 'Regarde le tableau que j’ai créé chez Linum Estudio',
     nota: 'Prix de référence du catalogue 2026. Nous confirmons le devis avant de commencer.',
     mensaje: (o) =>
       `Bonjour Linum, je suis intéressé(e) par ${o.diptico ? 'un diptyque' : 'un tableau'} avec le tissu ${o.tela}, ${o.medida} cm, ` +

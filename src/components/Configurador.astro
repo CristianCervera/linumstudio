@@ -23,7 +23,6 @@ const marcoNombre = (id: (typeof marcos)[number]['id']) => t.marcos[id];
 // Plantillas del mensaje de WhatsApp para el script: {tela}, {medida} y el marco ({marco} en minúsculas, {MARCO} tal cual)
 const textos = {
   intl: idiomas[lang].intl,
-  compartir: t.compartirTexto,
   marca: `Linum Estudio · ${contacto.instagramUser} · ${contacto.telefono}`,
   tapiz: t.tapiz,
   diptico: t.diptico,
@@ -256,7 +255,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     const DESCUENTO = 0.25;
     const WHATSAPP = 'https://wa.me/34634264135';
     const textos = JSON.parse(form.dataset.textos!) as {
-      intl: string; compartir: string; marca: string; tapiz: string; diptico: string; segundo: string; mensajes: Record<string, string>;
+      intl: string; marca: string; tapiz: string; diptico: string; segundo: string; mensajes: Record<string, string>;
     };
     const fmt = new Intl.NumberFormat(textos.intl, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
     const euros = (n: number) => fmt.format(Math.round(n));
@@ -476,7 +475,9 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
 
     // Compartir el diseño como imagen: el menú del sistema si admite archivos, si no se descarga.
     // Safari solo deja abrir el menú justo después del toque, así que la imagen se prepara antes,
-    // cuando el diseño lleva un momento sin cambiar, y al pulsar se comparte la que ya está hecha.
+    // cuando el diseño lleva un momento sin cambiar (y han acabado las transiciones), y al pulsar
+    // se comparte la que ya está hecha. Va sola, sin texto: WhatsApp e Instagram descartan la
+    // imagen si la acompaña un texto, y la propia imagen ya lleva la marca y el teléfono.
     const compartir = $<HTMLButtonElement>('[data-compartir]');
     let lista: { clave: string; archivo: File } | null = null;
     let espera = 0;
@@ -493,7 +494,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     };
     const anticipar = () => {
       clearTimeout(espera);
-      espera = window.setTimeout(() => { preparar().catch(() => {}); }, 900);
+      espera = window.setTimeout(() => { preparar().catch(() => {}); }, 500);
     };
     form.addEventListener('change', anticipar);
     $('[data-rooms]').addEventListener('change', anticipar);
@@ -501,7 +502,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
 
     compartir.addEventListener('click', async () => {
       const archivo = lista?.clave === clave() ? lista.archivo : await preparar();
-      const datos = { files: [archivo], text: `${textos.compartir}: ${location.origin}${location.pathname}` };
+      const datos = { files: [archivo] };
       if (navigator.canShare?.(datos)) {
         try { await navigator.share(datos); return; }
         catch (e) { if ((e as Error).name === 'AbortError') return; }

@@ -3,7 +3,7 @@ import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Logo from './Logo.astro';
 import Configurador from './Configurador.astro';
-import { contacto, trabajos, tarifas, enmarcado, diptico, telas } from '../data/estudio';
+import { contacto, trabajos, tarifas, enmarcado, diptico, telas, mosaico } from '../data/estudio';
 import { ui, idiomas, langs, rutaDe, euros, type Lang } from '../i18n/ui';
 import portada from '../assets/catalogo-portada.jpg';
 import fs from 'node:fs';
@@ -12,7 +12,13 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = ui[lang];
 
-const [hero, ...galeria] = trabajos;
+const galeria = trabajos;
+
+// Mosaico de la cabecera: las fotos repartidas en columnas que se deslizan; cada columna va triplicada
+// para que el bucle no tenga salto ni huecos aunque la columna sea corta. Los pares suben y los impares bajan, a velocidades distintas.
+const COLUMNAS = 6;
+const columnas = Array.from({ length: COLUMNAS }, (_, c) => mosaico.filter((_, i) => i % COLUMNAS === c));
+const ritmos = [84, 102, 76, 96, 88, 108];
 const pdfBytes = fs.statSync('public' + contacto.catalogo.href).size;
 const pdfMb = (pdfBytes / 1024 / 1024).toLocaleString(idiomas[lang].intl, { maximumFractionDigits: 1 });
 const precioDesde = Math.min(...tarifas.map((x) => x.precio));
@@ -55,9 +61,24 @@ const iconoDescarga = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="n
   </header>
 
   <main id="contenido">
-    <section id="inicio" class="hero">
-      <div class="wrap hero-grid">
-        <div class="hero-copy">
+    <section id="inicio" class="hero" data-hero>
+      <div class="mosaico" aria-hidden="true">
+        {columnas.map((col, c) => (
+          <div class="mosaico-col" style={`--dur:${ritmos[c]}s;--delay:-${ritmos[c] * (c % 3) / 3}s`}>
+            {[...col, ...col, ...col].map((src, i) => (
+              <Image
+                src={src}
+                alt=""
+                widths={[240, 400]}
+                sizes="(min-width: 960px) 16vw, 38vw"
+                loading={i < col.length && i < 2 ? 'eager' : 'lazy'}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div class="wrap hero-inner">
+        <div class="hero-card">
           <p class="eyebrow">{t.hero.eyebrow}</p>
           <h1>{t.hero.titulo} <em>{t.hero.tituloEm}</em></h1>
           <p class="lede">{t.hero.lede}</p>
@@ -74,10 +95,11 @@ const iconoDescarga = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="n
             <li>{t.hero.desde} <strong>{euros(lang, precioDesde)}</strong></li>
           </ul>
         </div>
-        <figure class="hero-media">
-          <Image src={hero.imagen} alt={t.trabajos.items[hero.slug].alt} widths={[480, 720, 960]} sizes="(min-width: 960px) 40vw, 92vw" loading="eager" fetchpriority="high" />
-        </figure>
       </div>
+      <button class="mosaico-pausa" type="button" aria-pressed="false" aria-label={t.a11y.pausar} data-pausa>
+        <svg class="icono-pausa" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+        <svg class="icono-play" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/></svg>
+      </button>
     </section>
 
     <section id="trabajos" class="section" aria-labelledby="trabajos-title">
@@ -188,6 +210,15 @@ const iconoDescarga = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="n
 </Base>
 
 <script>
+  // Pausa del mosaico de la cabecera
+  const hero = document.querySelector<HTMLElement>('[data-hero]');
+  const pausa = hero?.querySelector<HTMLButtonElement>('[data-pausa]');
+  pausa?.addEventListener('click', () => {
+    const pausado = pausa.getAttribute('aria-pressed') !== 'true';
+    pausa.setAttribute('aria-pressed', String(pausado));
+    hero!.toggleAttribute('data-pausado', pausado);
+  });
+
   // Cierra el menú de idioma al pulsar fuera o con Escape
   const menu = document.querySelector<HTMLDetailsElement>('[data-lang-menu]');
   if (menu) {
@@ -228,17 +259,60 @@ const iconoDescarga = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="n
   }
 
   /* —— Hero —— */
-  .hero { padding-block: clamp(2.5rem, 1.5rem + 4vw, 6rem) clamp(3rem, 2rem + 4vw, 6rem); }
-  .hero-grid { display: grid; gap: clamp(2rem, 1rem + 4vw, 5rem); align-items: center; }
-  @media (min-width: 960px) { .hero-grid { grid-template-columns: 1.15fr 1fr; } }
-  .hero-copy { display: grid; gap: 1.5rem; justify-items: start; }
+  .hero {
+    position: relative; isolation: isolate; overflow: hidden;
+    display: grid; align-items: center;
+    min-height: min(calc(100svh - 64px), 56rem);
+    padding-block: clamp(4.5rem, 3rem + 6vw, 7rem);
+  }
+  /* Velo claro sobre las fotos para que la tarjeta destaque sin esconderlas */
+  .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: color-mix(in oklab, var(--surface), transparent 72%); }
+  .mosaico {
+    position: absolute; z-index: -2; top: -2rem; bottom: -2rem; left: 50%; translate: -50% 0;
+    width: calc(100% + 4rem);
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem;
+  }
+  /* En móvil las columnas no caben: se centran las del medio y el resto queda fuera */
+  @media (max-width: 719px) {
+    .mosaico { width: calc(6 * 38vw + 5 * 0.75rem); }
+    /* La tarjeta ocupa casi todo el ancho: se baja para dejar una franja de fotos arriba */
+    .hero { align-items: end; padding-block: 10rem 1.5rem; }
+    .mosaico-pausa { top: 1rem; bottom: auto; }
+  }
+  .mosaico-col { animation: mosaico var(--dur) linear var(--delay) infinite; }
+  .mosaico-col:nth-child(even) { animation-direction: reverse; }
+  /* Margen en vez de gap: así un tercio exacto de la columna es una vuelta completa */
+  .mosaico-col img { display: block; width: 100%; height: auto; margin-bottom: 0.75rem; border-radius: 10px; }
+  @keyframes mosaico { to { translate: 0 calc(-100% / 3); } }
+  .hero[data-pausado] .mosaico-col { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) {
+    .mosaico-col { animation: none; }
+    .mosaico-pausa { display: none; }
+  }
+
+  .hero-inner { display: grid; justify-items: center; }
+  .hero-card {
+    display: grid; gap: 1.5rem; justify-items: start; max-width: 40rem;
+    padding: clamp(1.5rem, 1rem + 3vw, 3.25rem);
+    background: var(--raised);
+    border: 1px solid var(--rule); border-radius: calc(var(--radius) * 1.5);
+    box-shadow: 0 40px 80px -30px rgb(42 36 31 / 0.4), 0 10px 24px -12px rgb(42 36 31 / 0.25);
+  }
+  .mosaico-pausa {
+    position: absolute; right: var(--gutter); bottom: 1rem;
+    display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--raised); color: var(--ink); cursor: pointer;
+    box-shadow: 0 4px 12px -6px rgb(42 36 31 / 0.35);
+  }
+  .mosaico-pausa svg { width: 18px; height: 18px; }
+  .mosaico-pausa:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .mosaico-pausa .icono-play, .mosaico-pausa[aria-pressed='true'] .icono-pausa { display: none; }
+  .mosaico-pausa[aria-pressed='true'] .icono-play { display: block; }
   .hero h1 { font-size: var(--step-3); max-width: 12ch; }
   .hero h1 em { font-style: italic; color: var(--accent); }
   .hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
   .facts { list-style: none; padding: 1.5rem 0 0; margin: 0.5rem 0 0; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: var(--step--1); }
   .facts strong { color: var(--ink); font: 500 var(--step-1) / 1 var(--font-display); }
-  .hero-media { margin: 0; }
-  .hero-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); }
 
   /* —— Galería —— */
   .section-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1.5rem; }

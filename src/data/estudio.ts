@@ -101,6 +101,5 @@ export const trabajos = [
   'katmandu-patio',
 ].map((slug) => ({ slug, imagen: img(trabajoImgs, 'trabajos', slug) }));
 
-export const imagenes = {
-  heroDetalle: img(trabajoImgs, 'trabajos', 'detalle-bogota'),
-};
+/** Todas las fotos de trabajos, para el mosaico de la cabecera. */
+export const mosaico = Object.values(trabajoImgs).map((m) => m.default);

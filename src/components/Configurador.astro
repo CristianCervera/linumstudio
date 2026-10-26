@@ -51,8 +51,9 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
           class="wall"
           data-wall
           data-room={estanciaInicial.id}
-          style={`--fx:${sitioInicial.x};--fb:${sitioInicial.abajo};--fcm:${sitioInicial.cm};--y0:${sitioInicial.y0};--moldura:${MOLDURA};--separacion:${SEPARACION_DIPTICO}`}
+          style={`--fx:${sitioInicial.x};--fb:${sitioInicial.abajo};--fcm:${sitioInicial.cm};--y0:${sitioInicial.y0};--cy:${sitioInicial.cy};--moldura:${MOLDURA};--separacion:${SEPARACION_DIPTICO}`}
         >
+          <div class="scene">
           <Estancias inicial={estanciaInicial.id} />
           <div
             class="frames"
@@ -75,10 +76,12 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
             ))}
           </div>
           <div class="floor" aria-hidden="true"></div>
+          </div>
         </div>
         <figcaption class="preview-caption" aria-live="polite">
           <span class="preview-name" data-out-nombre>{inicial.tela.nombre}</span>
           <span data-out-detalle>{inicial.tamano.medida} cm · {marcoNombre(inicial.marco.id)}</span>
+          <span class="preview-price" data-out-precio>{euros(precioInicial)}</span>
         </figcaption>
         <fieldset class="rooms" data-rooms>
           <legend>{t.verEn} <span class="rooms-note">· {t.escala}</span></legend>
@@ -217,6 +220,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     const detalle = $('[data-out-detalle]');
     const breakdown = $('[data-breakdown]');
     const total = $('[data-total]');
+    const precio = $('[data-out-precio]');
     const cta = $<HTMLAnchorElement>('[data-whatsapp]');
     const fabrics = frames.querySelectorAll<HTMLImageElement>('[data-fabric]');
 
@@ -253,7 +257,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
           return row;
         })
       );
-      total.textContent = euros(unidad + segundo);
+      total.textContent = precio.textContent = euros(unidad + segundo);
 
       const mensaje = textos.mensajes[`${esDiptico}-${conMarco}`]
         .replace('{tela}', tela.dataset.nombre!)
@@ -283,12 +287,18 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       wall.style.setProperty('--fb', String(sitio.abajo));
       wall.style.setProperty('--fcm', String(sitio.cm));
       wall.style.setProperty('--y0', String(sitio.y0));
+      wall.style.setProperty('--cy', String(sitio.cy));
     };
 
     form.addEventListener('change', update);
     update();
 
     $('[data-rooms]').addEventListener('change', colgar);
+
+    // En móvil las telas van en una tira horizontal: deja a la vista la elegida
+    const tira = $<HTMLElement>('.swatches');
+    const elegida = checked('tela').closest<HTMLElement>('.swatch')!;
+    tira.scrollLeft = elegida.offsetLeft - tira.clientWidth / 2 + elegida.offsetWidth / 2;
 
     const swatches = form.querySelectorAll<HTMLElement>('.swatch');
     form.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((btn, _, all) => {
@@ -298,6 +308,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
         swatches.forEach((s) => {
           s.hidden = !(f === 'todas' || (f === 'nueva' ? s.dataset.nueva === 'true' : s.dataset.familia === f));
         });
+        tira.scrollLeft = 0;
       });
     });
   }
@@ -314,14 +325,23 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   /* —— Vista previa: la pared —— */
   .preview { margin: 0; display: grid; gap: 1rem; }
   .wall {
-    /* Cuadrada, como el recorte de las fotos de estancias */
+    /* Cuadrada en escritorio; en móvil es más baja y la escena se desplaza para centrar el tapiz */
     position: relative; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden;
+    background: var(--wall);
+    container-type: size;
+  }
+  .scene {
+    /* Cuadrada, como el recorte de las fotos de estancias */
+    position: absolute; left: 0; width: 100%; aspect-ratio: 1;
+    top: clamp(100cqh - 100cqw, 50cqh - var(--cy) * 100cqw, 0px);
     background:
       radial-gradient(120% 80% at 30% 0%, var(--wall-light), transparent 60%),
       var(--wall);
     display: grid; place-items: center; padding: 6% 6% 16%;
     container-type: size;
+    transition: top 0.3s var(--ease);
   }
+  .wall[data-room='cerca'] .scene { top: 0; height: 100%; aspect-ratio: auto; }
   .floor {
     position: absolute; inset: auto 0 0 0; height: 14%;
     background: linear-gradient(color-mix(in oklab, var(--wall), black 10%), color-mix(in oklab, var(--wall), black 4%));
@@ -349,7 +369,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   .frames[data-diptico='true'] .frame { height: calc(var(--h) / var(--max) * 64cqh); }
 
   /* —— Estancias: la foto marca la escala; --fcm es el % del recorte que mide 1 cm —— */
-  .wall:not([data-room='cerca']) { padding: 0; }
+  .wall:not([data-room='cerca']) .scene { padding: 0; }
   .wall:not([data-room='cerca']) .floor { display: none; }
   .wall:not([data-room='cerca']) .frames {
     --m: var(--moldura);
@@ -444,7 +464,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   .toggle { display: flex; align-items: center; gap: 1rem; cursor: pointer; min-height: 52px; margin-top: 0.5rem; }
   .toggle > span:last-child { display: grid; }
   .toggle-note { color: var(--ink-2); font-size: var(--step--1); }
-  .toggle-track { width: 51px; height: 31px; border-radius: 999px; background: var(--rule); position: relative; flex: none; transition: background-color 0.2s var(--ease); }
+  .toggle-track { width: 51px; height: 31px; border-radius: 999px; background: color-mix(in oklab, var(--ink-2) 50%, var(--surface)); position: relative; flex: none; transition: background-color 0.2s var(--ease); }
   .toggle-track::after {
     content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%;
     background: #fff; box-shadow: 0 2px 4px rgb(0 0 0 / 0.2); transition: transform 0.25s var(--ease);
@@ -461,4 +481,50 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   .total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 0.75rem; border-top: 1px solid var(--rule); }
   .total output { font: 600 var(--step-2) / 1 var(--font-display); font-variant-numeric: lining-nums tabular-nums; }
   .btn-block { width: 100%; }
+
+  /* —— Móvil: la vista previa se queda arriba y los controles se compactan —— */
+  .preview-price { display: none; }
+  @media (max-width: 959px) {
+    .config-grid { gap: 1.75rem; }
+    .preview {
+      position: sticky; top: 64px; z-index: 5;
+      margin-inline: calc(-1 * var(--gutter)); padding-bottom: 0.75rem; gap: 0.6rem;
+      background: var(--raised); border-bottom: 1px solid var(--rule);
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .wall { aspect-ratio: 16 / 10; border-radius: 0; }
+    .preview-caption { padding-inline: var(--gutter); flex-wrap: nowrap; align-items: baseline; gap: 0.6rem; font-size: var(--step--1); }
+    .preview-caption > [data-out-detalle] { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .preview-name { font-size: var(--step-1); flex: none; }
+    .preview-price { display: block; flex: none; font: 600 var(--step-1) / 1 var(--font-display); color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
+    .rooms legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .room-chip span { min-height: 40px; padding: 0 0.9rem; }
+
+    .controls { gap: 2rem; }
+    legend { margin-bottom: 0.75rem; }
+
+    /* Tiras deslizables a sangre: estancias, filtros y telas */
+    .room-chips, .filters, .swatches {
+      margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scroll-padding-inline: var(--gutter);
+      overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+    }
+    .room-chips::-webkit-scrollbar, .filters::-webkit-scrollbar, .swatches::-webkit-scrollbar { display: none; }
+    .room-chips, .filters { flex-wrap: nowrap; }
+    .room-chips { margin-inline: 0; } /* la vista previa ya va a sangre */
+    .room-chip, .chip { flex: none; }
+    .swatches {
+      position: relative;
+      grid-template-columns: none; grid-auto-flow: column; grid-template-rows: repeat(2, auto);
+      grid-auto-columns: 5.5rem; gap: 0.9rem 0.75rem; padding-block: 5px;
+      scroll-snap-type: x proximity;
+    }
+    .swatch { scroll-snap-align: start; }
+
+    .frames-opts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .frames-opts .option-body {
+      flex-direction: column; justify-content: center; gap: 0.35rem; height: 100%;
+      padding: 0.75rem 0.25rem; text-align: center; font-size: var(--step--1); line-height: 1.2;
+    }
+    .frames-opts .option-price { margin-left: 0; font-size: 0.8125rem; }
+  }
 </style>

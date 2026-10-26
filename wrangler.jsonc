@@ -1,0 +1,9 @@
+// Web estática: el Worker solo sirve lo que genera `npm run build` en dist/.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "linumstudio",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}

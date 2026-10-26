@@ -25,8 +25,8 @@ const capas = await Promise.all(
       };
     })
 );
-// La foto se pinta a FOTO.ancho / VISTA veces el ancho de la pared
-const sizes = `(min-width: 960px) ${Math.round((560 * FOTO.ancho) / VISTA)}px, ${Math.round((100 * FOTO.ancho) / VISTA)}vw`;
+// La foto se pinta a FOTO.ancho / VISTA veces el alto de la pared (en móvil, 10/16 del ancho)
+const sizes = `(min-width: 960px) ${Math.round((560 * FOTO.ancho) / VISTA)}px, ${Math.round((100 * FOTO.ancho * 10) / (VISTA * 16))}vw`;
 ---
 {capas.map((c) => (
   <img

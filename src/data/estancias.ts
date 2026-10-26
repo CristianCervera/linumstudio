@@ -44,8 +44,7 @@ export const recorteX = (e: EstanciaFoto) => Math.min(Math.max(e.cx - VISTA / 2,
 /**
  * Dónde colgar un tapiz (o díptico) de `anchoCm` × `altoCm` con marco incluido.
  * Devuelve el centro y el borde inferior en % del recorte, cuántos % del recorte mide 1 cm
- * el borde superior del recorte (y0), que baja si hace falta para que el tapiz se vea entero,
- * y la altura de su centro como fracción del recorte (cy), para centrarlo en una vista más baja que ancha.
+ * y el borde superior del recorte (y0), que baja si hace falta para que el tapiz se vea entero.
  */
 export function colocar(e: EstanciaFoto, anchoCm: number, altoCm: number) {
   const mitad = (anchoCm * e.escala) / 2;
@@ -63,8 +62,18 @@ export function colocar(e: EstanciaFoto, anchoCm: number, altoCm: number) {
     abajo: ((y0 + VISTA - base) / VISTA) * 100,
     cm: (e.escala / VISTA) * 100,
     y0,
-    cy: (base - alto / 2 - y0) / VISTA,
   };
+}
+
+/**
+ * En una vista más ancha que alta (el móvil) se ve el recorte entero de alto y más foto a los lados.
+ * Devuelve cuánto hay que correr la escena, en fracciones del recorte, para no salirse de la foto.
+ */
+export function desplazamiento(e: EstanciaFoto, aspecto: number) {
+  const centro = recorteX(e) + VISTA / 2;
+  const mitad = (aspecto * VISTA) / 2;
+  const visto = mitad * 2 >= FOTO.ancho ? FOTO.ancho / 2 : Math.min(Math.max(centro, mitad), FOTO.ancho - mitad);
+  return (centro - visto) / VISTA;
 }
 
 /** Moldura del marco y separación entre las dos piezas de un díptico, en cm. */

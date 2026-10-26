@@ -53,7 +53,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
           class="wall"
           data-wall
           data-room={estanciaInicial.id}
-          style={`--fx:${sitioInicial.x};--fb:${sitioInicial.abajo};--fcm:${sitioInicial.cm};--y0:${sitioInicial.y0};--cy:${sitioInicial.cy};--moldura:${MOLDURA};--separacion:${SEPARACION_DIPTICO}`}
+          style={`--fx:${sitioInicial.x};--fb:${sitioInicial.abajo};--fcm:${sitioInicial.cm};--y0:${sitioInicial.y0};--dx:0;--moldura:${MOLDURA};--separacion:${SEPARACION_DIPTICO}`}
         >
           <div class="scene">
           <Estancias inicial={estanciaInicial.id} />
@@ -245,7 +245,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
 </section>
 
 <script>
-  import { estancias, colocar, medidasColgado, A4 } from '../data/estancias';
+  import { estancias, colocar, desplazamiento, medidasColgado, A4 } from '../data/estancias';
   import { imagenDiseno } from '../scripts/imagen-diseno';
 
   const form = document.querySelector<HTMLFormElement>('[data-config]');
@@ -337,7 +337,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       wall.style.setProperty('--fb', String(sitio.abajo));
       wall.style.setProperty('--fcm', String(sitio.cm));
       wall.style.setProperty('--y0', String(sitio.y0));
-      wall.style.setProperty('--cy', String(sitio.cy));
+      wall.style.setProperty('--dx', String(desplazamiento(foto, wall.clientWidth / wall.clientHeight)));
     };
 
     // Tu pared: la foto del cliente, que no sale del navegador. Un folio A4 pegado en la pared da la escala.
@@ -351,12 +351,15 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     const pared = { fu: 0.5, fv: 0.45, fw: 0.1, u: 0.5, v: 0.45, anchoCm: ANCHO_SIN_FOLIO };
     const limitar = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max);
 
-    // Dónde se pinta la foto en la pared: entera mientras se ajusta el folio, y a sangre centrada en él después
+    // Dónde se pinta la foto en la pared: entera mientras se ajusta el folio, y a sangre centrada en él
+    // después, salvo que eso recorte mucho (una foto vertical en la vista apaisada del móvil)
     const encaje = () => {
-      const entera = wall.dataset.foto === 'calibrando';
       const sw = wall.clientWidth;
       const sh = wall.clientHeight;
-      const s = (entera ? Math.min : Math.max)(sw / miFoto.naturalWidth, sh / miFoto.naturalHeight);
+      const cabe = Math.min(sw / miFoto.naturalWidth, sh / miFoto.naturalHeight);
+      const cubre = Math.max(sw / miFoto.naturalWidth, sh / miFoto.naturalHeight);
+      const entera = wall.dataset.foto === 'calibrando' || cubre / cabe > 1.25;
+      const s = entera ? cabe : cubre;
       const w = miFoto.naturalWidth * s;
       const h = miFoto.naturalHeight * s;
       const lado = (hueco: number, mide: number, f: number) =>
@@ -382,7 +385,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       wall.style.setProperty('--fcm', String((cm / r.sw) * 100));
       wall.style.setProperty('--fb', String(((r.sh - centroY - (colgado().alto * cm) / 2) / r.sh) * 100));
     };
-    new ResizeObserver(pintarFoto).observe(wall);
+    new ResizeObserver(() => colgar()).observe(wall);
 
     // Arrastre con el dedo o el ratón; mover recibe el desplazamiento y el evento
     const arrastrar = (el: HTMLElement, puede: () => boolean, mover: (dx: number, dy: number, e: PointerEvent) => void) => {
@@ -551,23 +554,24 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   /* —— Vista previa: la pared —— */
   .preview { margin: 0; display: grid; gap: 1rem; }
   .wall {
-    /* Cuadrada en escritorio; en móvil es más baja y la escena se desplaza para centrar el tapiz */
+    /* Cuadrada en escritorio; en móvil es más baja y ancha, y se ve más foto a los lados */
     position: relative; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden;
     background: var(--wall);
     container-type: size;
   }
   .scene {
-    /* Cuadrada, como el recorte de las fotos de estancias */
-    position: absolute; left: 0; width: 100%; aspect-ratio: 1;
-    top: clamp(100cqh - 100cqw, 50cqh - var(--cy) * 100cqw, 0px);
+    /* Cuadrada, como el recorte de las fotos de estancias: tan alta como la pared y centrada en ella
+       (--dx la corre para no salirse de la foto). La foto de la estancia desborda la escena a los lados */
+    position: absolute; top: 0; height: 100%; aspect-ratio: 1;
+    left: calc(50cqw - 50cqh + var(--dx) * 100cqh);
     background:
       radial-gradient(120% 80% at 30% 0%, var(--wall-light), transparent 60%),
       var(--wall);
     display: grid; place-items: center; padding: 6% 6% 16%;
     container-type: size;
-    transition: top 0.3s var(--ease);
+    transition: left 0.3s var(--ease);
   }
-  .wall[data-room='cerca'] .scene { top: 0; height: 100%; aspect-ratio: auto; }
+  .wall:is([data-room='cerca'], [data-room='foto']) .scene { left: 0; width: 100%; aspect-ratio: auto; }
   .floor {
     position: absolute; inset: auto 0 0 0; height: 14%;
     background: linear-gradient(color-mix(in oklab, var(--wall), black 10%), color-mix(in oklab, var(--wall), black 4%));
@@ -618,7 +622,6 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   }
 
   /* —— Tu pared: la foto del cliente, colocada por el script en px de la pared —— */
-  .wall[data-room='foto'] .scene { top: 0; height: 100%; aspect-ratio: auto; }
   .mi-foto { position: absolute; max-width: none; display: none; }
   .wall[data-room='foto'][data-foto] .mi-foto { display: block; }
   .wall[data-room='foto']:not([data-foto='lista']) .frames { display: none; }
@@ -784,6 +787,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       grid-template-columns: minmax(0, 1fr);
     }
     .wall { aspect-ratio: 16 / 10; border-radius: 0; }
+    .wall[data-room='foto'] { aspect-ratio: 4 / 3; }
     .preview-caption { padding-inline: var(--gutter); flex-wrap: nowrap; align-items: baseline; gap: 0.6rem; font-size: var(--step--1); }
     .preview-caption > [data-out-detalle] { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .preview-name { font-size: var(--step-1); flex: none; }

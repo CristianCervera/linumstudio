@@ -1,0 +1,66 @@
+---
+// Fotos de las estancias, recortadas en un cuadrado de VISTA px alrededor del hueco del tapiz.
+// Solo se ve la de la estancia elegida (data-room de la pared, ver Configurador.astro).
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import { estancias, FOTO, VISTA, recorteX } from '../data/estancias';
+
+interface Props { inicial: string }
+const { inicial } = Astro.props;
+
+const fotos = import.meta.glob<{ default: ImageMetadata }>('../assets/estancias/*.jpg', { eager: true });
+const anchos = [1200, 1800, 2752];
+
+const capas = await Promise.all(
+  estancias
+    .filter((e) => e.foto)
+    .map(async ({ id, foto }) => {
+      const src = fotos[`../assets/estancias/${id}.jpg`].default;
+      const versiones = await Promise.all(anchos.map((w) => getImage({ src, width: w, format: 'webp', quality: 74 })));
+      return {
+        id,
+        src: versiones[1].src,
+        srcset: versiones.map((v, i) => `${v.src} ${anchos[i]}w`).join(', '),
+        estilo: `--x0:${recorteX(foto!)}`,
+      };
+    })
+);
+// La foto se pinta a FOTO.ancho / VISTA veces el ancho de la pared
+const sizes = `(min-width: 960px) ${Math.round((560 * FOTO.ancho) / VISTA)}px, ${Math.round((100 * FOTO.ancho) / VISTA)}vw`;
+---
+{capas.map((c) => (
+  <img
+    class="estancia"
+    data-estancia={c.id}
+    src={c.src}
+    srcset={c.srcset}
+    sizes={sizes}
+    alt=""
+    width={FOTO.ancho}
+    height={FOTO.alto}
+    loading={c.id === inicial ? 'eager' : 'lazy'}
+    decoding="async"
+    style={c.estilo}
+  />
+))}
+
+<style>
+  .estancia {
+    position: absolute; max-width: none;
+    /* FOTO.ancho = 2752 y VISTA = 1300 (src/data/estudio.ts) */
+    width: calc(2752 / 1300 * 100%);
+    height: auto;
+    left: calc(var(--x0) / 1300 * -100%);
+    /* --y0 lo pone la pared: el encuadre baja si el tapiz sube */
+    top: calc(var(--y0) / 1300 * -100%);
+    transition: top 0.3s var(--ease);
+    display: none;
+  }
+  :global(.wall[data-room='salon']) [data-estancia='salon'],
+  :global(.wall[data-room='dormitorio']) [data-estancia='dormitorio'],
+  :global(.wall[data-room='infantil']) [data-estancia='infantil'],
+  :global(.wall[data-room='comedor']) [data-estancia='comedor'],
+  :global(.wall[data-room='recibidor']) [data-estancia='recibidor'],
+  :global(.wall[data-room='despacho']) [data-estancia='despacho'],
+  :global(.wall[data-room='bano']) [data-estancia='bano'] { display: block; }
+</style>

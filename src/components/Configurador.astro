@@ -1,0 +1,464 @@
+---
+import { Image, getImage } from 'astro:assets';
+import { telas, familias, tamanos, marcos, enmarcado, diptico, contacto } from '../data/estudio';
+import { estancias, colocar, medidasColgado, MOLDURA, SEPARACION_DIPTICO } from '../data/estancias';
+import Estancias from './Estancias.astro';
+import { ui, idiomas, euros as eur, type Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang].config;
+const pct = diptico.descuento * 100;
+
+const grandes = await Promise.all(
+  telas.map((t) => getImage({ src: t.imagen, width: 900, format: 'webp', quality: 80 }))
+);
+
+const inicial = { tela: telas.find((t) => t.slug === 'tanger') ?? telas[0], tamano: tamanos[2], marco: marcos[1] };
+const precioInicial = inicial.tamano.precio + enmarcado.precio;
+const euros = (n: number) => eur(lang, n);
+const marcoNombre = (id: (typeof marcos)[number]['id']) => t.marcos[id];
+
+// Plantillas del mensaje de WhatsApp para el script: {tela}, {medida} y el marco ({marco} en minúsculas, {MARCO} tal cual)
+const textos = {
+  intl: idiomas[lang].intl,
+  tapiz: t.tapiz,
+  diptico: t.diptico,
+  segundo: t.segundo(pct),
+  mensajes: Object.fromEntries(
+    [true, false].flatMap((d) => [true, false].map((m) => [
+      `${d}-${m}`,
+      t.mensaje({ diptico: d, tela: '{tela}', medida: '{medida}', marco: m ? '{MARCO}' : null }),
+    ]))
+  ),
+};
+const maxAlto = Math.max(...tamanos.map((t) => t.alto));
+const estanciaInicial = estancias[1];
+const colgadoInicial = medidasColgado(inicial.tamano.ancho, inicial.tamano.alto, inicial.marco.id !== 'sin', false);
+const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgadoInicial.alto);
+---
+<section id="configurador" class="section config" aria-labelledby="config-title">
+  <div class="wrap">
+    <header class="section-head">
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h2 id="config-title">{t.titulo}</h2>
+      <p class="lede">{t.lede}</p>
+    </header>
+
+    <div class="config-grid">
+      <figure class="preview">
+        <div
+          class="wall"
+          data-wall
+          data-room={estanciaInicial.id}
+          style={`--fx:${sitioInicial.x};--fb:${sitioInicial.abajo};--fcm:${sitioInicial.cm};--y0:${sitioInicial.y0};--moldura:${MOLDURA};--separacion:${SEPARACION_DIPTICO}`}
+        >
+          <Estancias inicial={estanciaInicial.id} />
+          <div
+            class="frames"
+            data-frames
+            data-diptico="false"
+            style={`--w:${inicial.tamano.ancho};--h:${inicial.tamano.alto};--max:${maxAlto};--frame:${inicial.marco.color}`}
+            data-marco={inicial.marco.id}
+          >
+            {[0, 1].map((i) => (
+              <div class="frame" data-frame={i}>
+                <img
+                  src={grandes[telas.indexOf(inicial.tela)].src}
+                  alt=""
+                  width="900"
+                  height="900"
+                  decoding="async"
+                  data-fabric
+                />
+              </div>
+            ))}
+          </div>
+          <div class="floor" aria-hidden="true"></div>
+        </div>
+        <figcaption class="preview-caption" aria-live="polite">
+          <span class="preview-name" data-out-nombre>{inicial.tela.nombre}</span>
+          <span data-out-detalle>{inicial.tamano.medida} cm · {marcoNombre(inicial.marco.id)}</span>
+        </figcaption>
+        <fieldset class="rooms" data-rooms>
+          <legend>{t.verEn} <span class="rooms-note">· {t.escala}</span></legend>
+          <div class="room-chips">
+            {estancias.map((e) => (
+              <label class="room-chip">
+                <input
+                  type="radio"
+                  name="fondo"
+                  value={e.id}
+                  checked={e === estanciaInicial}
+                />
+                <span>{t.estancias[e.id]}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </figure>
+
+      <form class="controls" data-config data-textos={JSON.stringify(textos)} onsubmit="return false">
+        <fieldset class="step">
+          <legend><span class="step-n">1</span> {t.tela}</legend>
+          <div class="filters" role="group" aria-label={ui[lang].a11y.filtrar}>
+            <button type="button" class="chip" aria-pressed="true" data-filter="todas">{t.todas}</button>
+            <button type="button" class="chip" aria-pressed="false" data-filter="nueva">{t.novedades}</button>
+            {familias.map((id) => (
+              <button type="button" class="chip" aria-pressed="false" data-filter={id}>{t.familias[id]}</button>
+            ))}
+          </div>
+          <div class="swatches">
+            {telas.map((tela, i) => (
+              <label class="swatch" data-familia={tela.familia} data-nueva={tela.nueva ? 'true' : 'false'}>
+                <input
+                  type="radio"
+                  name="tela"
+                  value={tela.slug}
+                  checked={tela === inicial.tela}
+                  data-nombre={tela.nombre}
+                  data-src={grandes[i].src}
+                />
+                <span class="swatch-img">
+                  <Image src={tela.imagen} alt="" width={160} height={160} quality={72} loading="lazy" />
+                  {tela.nueva && <span class="badge">{t.nueva}</span>}
+                </span>
+                <span class="swatch-name">{tela.nombre}</span>
+              </label>
+            ))}
+          </div>
+          <p class="hint">{t.masTelas}</p>
+        </fieldset>
+
+        <fieldset class="step">
+          <legend><span class="step-n">2</span> {t.medida} <span class="legend-note">{t.medidaNota}</span></legend>
+          <div class="options sizes">
+            {tamanos.map((tam) => (
+              <label class="option">
+                <input
+                  type="radio"
+                  name="tamano"
+                  value={tam.medida}
+                  checked={tam === inicial.tamano}
+                  data-precio={tam.precio}
+                  data-ancho={tam.ancho}
+                  data-alto={tam.alto}
+                />
+                <span class="option-body">
+                  <span>{tam.medida}</span>
+                  <span class="option-price">{euros(tam.precio)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <p class="hint">{t.aMedida}</p>
+        </fieldset>
+
+        <fieldset class="step">
+          <legend><span class="step-n">3</span> {t.marco}</legend>
+          <div class="options frames-opts">
+            {marcos.map((m) => (
+              <label class="option">
+                <input type="radio" name="marco" value={m.id} checked={m === inicial.marco} data-nombre={marcoNombre(m.id)} data-color={m.color ?? ''} />
+                <span class="option-body">
+                  <span class="wood" style={m.color ? `--c:${m.color}` : undefined} data-none={!m.color}></span>
+                  <span>{marcoNombre(m.id)}</span>
+                  <span class="option-price">{m.color ? `+${euros(enmarcado.precio)}` : t.incluido}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <label class="toggle">
+            <input type="checkbox" name="diptico" role="switch" />
+            <span class="toggle-track" aria-hidden="true"></span>
+            <span>
+              <strong>{t.diptico}</strong>
+              <span class="toggle-note">{t.dipticoNota(pct)}</span>
+            </span>
+          </label>
+        </fieldset>
+
+        <div class="summary">
+          <dl class="breakdown" data-breakdown>
+            <div><dt>{t.tapiz} {inicial.tamano.medida}</dt><dd>{euros(inicial.tamano.precio)}</dd></div>
+            <div><dt>{marcoNombre(inicial.marco.id)}</dt><dd>+{euros(enmarcado.precio)}</dd></div>
+          </dl>
+          <p class="total">
+            <span>{t.total}</span>
+            <output data-total>{euros(precioInicial)}</output>
+          </p>
+          <a class="btn btn-primary btn-block" href={contacto.whatsapp} data-whatsapp target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>
+            {t.pedir}
+          </a>
+          <p class="hint">{t.nota}</p>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { estancias, colocar, medidasColgado } from '../data/estancias';
+
+  const form = document.querySelector<HTMLFormElement>('[data-config]');
+  const frames = document.querySelector<HTMLElement>('[data-frames]');
+  if (form && frames) {
+    const ENMARCADO = 30;
+    const DESCUENTO = 0.25;
+    const WHATSAPP = 'https://wa.me/34634264135';
+    const textos = JSON.parse(form.dataset.textos!) as {
+      intl: string; tapiz: string; diptico: string; segundo: string; mensajes: Record<string, string>;
+    };
+    const fmt = new Intl.NumberFormat(textos.intl, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+    const euros = (n: number) => fmt.format(Math.round(n));
+    const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
+    const nombre = $('[data-out-nombre]');
+    const detalle = $('[data-out-detalle]');
+    const breakdown = $('[data-breakdown]');
+    const total = $('[data-total]');
+    const cta = $<HTMLAnchorElement>('[data-whatsapp]');
+    const fabrics = frames.querySelectorAll<HTMLImageElement>('[data-fabric]');
+
+    const checked = (name: string) => form.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)!;
+
+    const update = () => {
+      const tela = checked('tela');
+      const tamano = checked('tamano');
+      const marco = checked('marco');
+      const esDiptico = form.querySelector<HTMLInputElement>('input[name="diptico"]')!.checked;
+
+      const base = Number(tamano.dataset.precio);
+      const conMarco = marco.value !== 'sin';
+      const unidad = base + (conMarco ? ENMARCADO : 0);
+      const segundo = esDiptico ? unidad * (1 - DESCUENTO) : 0;
+
+      fabrics.forEach((img) => { if (img.getAttribute('src') !== tela.dataset.src) img.src = tela.dataset.src!; });
+      frames.style.setProperty('--w', tamano.dataset.ancho!);
+      frames.style.setProperty('--h', tamano.dataset.alto!);
+      frames.style.setProperty('--frame', marco.dataset.color || 'transparent');
+      frames.dataset.marco = marco.value;
+      frames.dataset.diptico = String(esDiptico);
+
+      nombre.textContent = tela.dataset.nombre!;
+      detalle.textContent = `${esDiptico ? `${textos.diptico} · ` : ''}${tamano.value} cm · ${marco.dataset.nombre}`;
+
+      const filas: [string, string][] = [[`${textos.tapiz} ${tamano.value}`, euros(base)]];
+      if (conMarco) filas.push([marco.dataset.nombre!, `+${euros(ENMARCADO)}`]);
+      if (esDiptico) filas.push([textos.segundo, `+${euros(segundo)}`]);
+      breakdown.replaceChildren(
+        ...filas.map(([dt, dd]) => {
+          const row = document.createElement('div');
+          row.append(Object.assign(document.createElement('dt'), { textContent: dt }), Object.assign(document.createElement('dd'), { textContent: dd }));
+          return row;
+        })
+      );
+      total.textContent = euros(unidad + segundo);
+
+      const mensaje = textos.mensajes[`${esDiptico}-${conMarco}`]
+        .replace('{tela}', tela.dataset.nombre!)
+        .replace('{medida}', tamano.value)
+        .replace('{marco}', marco.dataset.nombre!.toLowerCase())
+        .replace('{MARCO}', marco.dataset.nombre!);
+      cta.href = `${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+      colgar();
+    };
+
+    // Coloca el tapiz en la foto de la estancia, a escala y sin tapar lámparas ni jarrones
+    const wall = $<HTMLElement>('[data-wall]');
+    const colgar = () => {
+      const fondo = document.querySelector<HTMLInputElement>('input[name="fondo"]:checked')!.value;
+      wall.dataset.room = fondo;
+      const foto = estancias.find((e) => e.id === fondo)?.foto;
+      if (!foto) return;
+      const tamano = checked('tamano');
+      const { ancho, alto } = medidasColgado(
+        Number(tamano.dataset.ancho),
+        Number(tamano.dataset.alto),
+        checked('marco').value !== 'sin',
+        form.querySelector<HTMLInputElement>('input[name="diptico"]')!.checked
+      );
+      const sitio = colocar(foto, ancho, alto);
+      wall.style.setProperty('--fx', String(sitio.x));
+      wall.style.setProperty('--fb', String(sitio.abajo));
+      wall.style.setProperty('--fcm', String(sitio.cm));
+      wall.style.setProperty('--y0', String(sitio.y0));
+    };
+
+    form.addEventListener('change', update);
+    update();
+
+    $('[data-rooms]').addEventListener('change', colgar);
+
+    const swatches = form.querySelectorAll<HTMLElement>('.swatch');
+    form.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((btn, _, all) => {
+      btn.addEventListener('click', () => {
+        const f = btn.dataset.filter;
+        all.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+        swatches.forEach((s) => {
+          s.hidden = !(f === 'todas' || (f === 'nueva' ? s.dataset.nueva === 'true' : s.dataset.familia === f));
+        });
+      });
+    });
+  }
+</script>
+
+<style>
+  .config { background: var(--raised); border-block: 1px solid var(--rule); }
+  .config-grid { display: grid; gap: clamp(2rem, 1rem + 3vw, 4rem); align-items: start; }
+  @media (min-width: 960px) {
+    .config-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); }
+    .preview { position: sticky; top: 6rem; }
+  }
+
+  /* —— Vista previa: la pared —— */
+  .preview { margin: 0; display: grid; gap: 1rem; }
+  .wall {
+    /* Cuadrada, como el recorte de las fotos de estancias */
+    position: relative; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden;
+    background:
+      radial-gradient(120% 80% at 30% 0%, var(--wall-light), transparent 60%),
+      var(--wall);
+    display: grid; place-items: center; padding: 6% 6% 16%;
+    container-type: size;
+  }
+  .floor {
+    position: absolute; inset: auto 0 0 0; height: 14%;
+    background: linear-gradient(color-mix(in oklab, var(--wall), black 10%), color-mix(in oklab, var(--wall), black 4%));
+    border-top: 1px solid color-mix(in oklab, var(--wall), black 14%);
+  }
+  .frames {
+    display: flex; gap: 5cqw; align-items: center; justify-content: center;
+  }
+  .frame {
+    /* El tamaño visual es proporcional a la medida real, para comparar entre tamaños */
+    height: calc(var(--h) / var(--max) * 80cqh);
+    aspect-ratio: var(--w) / var(--h);
+    padding: clamp(5px, 1.6%, 12px);
+    background: var(--frame);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.25) inset,
+      0 18px 30px -12px rgb(40 30 20 / 0.45),
+      0 4px 8px -4px rgb(40 30 20 / 0.3);
+    transition: height 0.45s var(--ease), aspect-ratio 0.45s var(--ease), background-color 0.3s var(--ease), padding 0.3s var(--ease);
+  }
+  .frames[data-marco='sin'] .frame { padding: 0; }
+  .frames[data-marco='blanca'] .frame { box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08), 0 18px 30px -12px rgb(40 30 20 / 0.4); }
+  .frame img { width: 100%; height: 100%; object-fit: cover; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.12) inset; }
+  .frames[data-diptico='false'] .frame[data-frame='1'] { display: none; }
+  .frames[data-diptico='true'] .frame { height: calc(var(--h) / var(--max) * 64cqh); }
+
+  /* —— Estancias: la foto marca la escala; --fcm es el % del recorte que mide 1 cm —— */
+  .wall:not([data-room='cerca']) { padding: 0; }
+  .wall:not([data-room='cerca']) .floor { display: none; }
+  .wall:not([data-room='cerca']) .frames {
+    --m: var(--moldura);
+    --cm: calc(var(--fcm) * 1cqw);
+    position: absolute;
+    left: calc(var(--fx) * 1cqw);
+    bottom: calc(var(--fb) * 1cqh);
+    translate: -50% 0;
+    gap: calc(var(--separacion) * var(--cm)); align-items: flex-end;
+    transition: left 0.3s var(--ease), bottom 0.3s var(--ease);
+  }
+  .wall:not([data-room='cerca']) .frames[data-marco='sin'] { --m: 0; }
+  .wall:not([data-room='cerca']) .frame {
+    width: calc((var(--w) + 2 * var(--m)) * var(--cm));
+    height: calc((var(--h) + 2 * var(--m)) * var(--cm));
+    aspect-ratio: auto;
+    padding: calc(var(--m) * var(--cm));
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.2) inset, 0 3px 8px -2px rgb(30 20 10 / 0.35);
+    transition: width 0.3s var(--ease), height 0.3s var(--ease), background-color 0.3s var(--ease);
+  }
+
+  .rooms { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 0.6rem; }
+  .rooms legend { display: block; padding: 0; margin-bottom: 0.6rem; font: 500 var(--step--1) / 1.4 var(--font-body); }
+  .rooms-note { color: var(--ink-2); font-weight: 400; }
+  .preview:has(input[value='cerca']:checked) .rooms-note { visibility: hidden; }
+  .room-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .room-chip { position: relative; cursor: pointer; }
+  .room-chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .room-chip span {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border-radius: 999px;
+    border: 1px solid var(--rule); font-size: var(--step--1); background: var(--raised);
+  }
+  .room-chip:hover span { border-color: var(--ink-2); }
+  .room-chip input:checked + span { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+  .room-chip input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .preview-caption { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; color: var(--ink-2); }
+  .preview-name { font: 500 var(--step-2) / 1 var(--font-display); color: var(--ink); }
+
+  /* —— Controles —— */
+  .controls { display: grid; gap: 2.25rem; }
+  .step { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 1rem; }
+  legend { display: flex; align-items: center; gap: 0.75rem; padding: 0; margin-bottom: 1rem; font: 500 var(--step-2) / 1.1 var(--font-display); }
+  .step-n {
+    display: inline-grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+    border: 1px solid var(--rule); font: 500 var(--step--1) / 1 var(--font-body);
+  }
+  .legend-note { font: 400 var(--step--1) / 1 var(--font-body); color: var(--ink-2); }
+  .hint { font-size: var(--step--1); color: var(--ink-2); }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .chip {
+    min-height: 44px; padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid var(--rule);
+    background: transparent; color: var(--ink); font: 400 var(--step--1) / 1 var(--font-body); cursor: pointer;
+  }
+  .chip:hover { border-color: var(--ink-2); }
+  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.25rem, 1fr)); gap: 1rem 0.75rem; }
+  .swatch { display: grid; gap: 0.4rem; cursor: pointer; }
+  .swatch[hidden] { display: none; }
+  .swatch img { aspect-ratio: 1; width: 100%; object-fit: cover; border-radius: 10px; transition: transform 0.2s var(--ease); }
+  .swatch:hover img { transform: scale(1.03); }
+  .swatch input, .option input, .toggle input { position: absolute; opacity: 0; pointer-events: none; }
+  .swatch:has(input:checked) img { outline: 2.5px solid var(--ink); outline-offset: 3px; }
+  .swatch:has(input:focus-visible) img { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .swatch-img { position: relative; display: block; }
+  .swatch-name { font-size: var(--step--1); line-height: 1.25; }
+  .badge {
+    position: absolute; left: 6px; top: 6px; padding: 3px 7px; border-radius: 999px;
+    background: var(--accent); color: var(--accent-ink);
+    font-size: 0.6875rem; line-height: 1.2; letter-spacing: 0.04em; font-weight: 500;
+  }
+
+  .options { display: grid; gap: 0.5rem; }
+  .sizes { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
+  .sizes .option-body > span:first-child { white-space: nowrap; }
+  .frames-opts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .option { position: relative; cursor: pointer; }
+  .option-body {
+    display: flex; align-items: center; gap: 0.75rem; min-height: 52px; padding: 0.6rem 1rem;
+    border: 1px solid var(--rule); border-radius: 12px; background: var(--surface);
+    transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  }
+  .option:hover .option-body { border-color: var(--ink-2); }
+  .option input:checked + .option-body { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset; }
+  .option input:focus-visible + .option-body { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .option-price { margin-left: auto; color: var(--ink-2); font-size: var(--step--1); white-space: nowrap; }
+  .wood { width: 1.4rem; height: 1.4rem; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15) inset; flex: none; }
+  .wood[data-none='true'] { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--rule) 4px 5px); }
+
+  .toggle { display: flex; align-items: center; gap: 1rem; cursor: pointer; min-height: 52px; margin-top: 0.5rem; }
+  .toggle > span:last-child { display: grid; }
+  .toggle-note { color: var(--ink-2); font-size: var(--step--1); }
+  .toggle-track { width: 51px; height: 31px; border-radius: 999px; background: var(--rule); position: relative; flex: none; transition: background-color 0.2s var(--ease); }
+  .toggle-track::after {
+    content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%;
+    background: #fff; box-shadow: 0 2px 4px rgb(0 0 0 / 0.2); transition: transform 0.25s var(--ease);
+  }
+  .toggle input:checked + .toggle-track { background: var(--accent); }
+  .toggle input:checked + .toggle-track::after { transform: translateX(20px); }
+  .toggle input:focus-visible + .toggle-track { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+  .summary { display: grid; gap: 1rem; padding: 1.5rem; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--rule); }
+  .breakdown { margin: 0; display: grid; gap: 0.4rem; color: var(--ink-2); }
+  /* Las filas las genera el script, así que no llevan el atributo de ámbito de Astro */
+  .breakdown :global(div) { display: flex; justify-content: space-between; gap: 1rem; }
+  .breakdown :global(dd) { margin: 0; font-variant-numeric: lining-nums tabular-nums; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 0.75rem; border-top: 1px solid var(--rule); }
+  .total output { font: 600 var(--step-2) / 1 var(--font-display); font-variant-numeric: lining-nums tabular-nums; }
+  .btn-block { width: 100%; }
+</style>

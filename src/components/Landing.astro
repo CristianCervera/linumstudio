@@ -1,0 +1,320 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Logo from './Logo.astro';
+import Configurador from './Configurador.astro';
+import { contacto, trabajos, tarifas, enmarcado, diptico, telas } from '../data/estudio';
+import { ui, idiomas, langs, rutaDe, euros, type Lang } from '../i18n/ui';
+import portada from '../assets/catalogo-portada.jpg';
+import fs from 'node:fs';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+
+const [hero, ...galeria] = trabajos;
+const pdfBytes = fs.statSync('public' + contacto.catalogo.href).size;
+const pdfMb = (pdfBytes / 1024 / 1024).toLocaleString(idiomas[lang].intl, { maximumFractionDigits: 1 });
+const precioDesde = Math.min(...tarifas.map((x) => x.precio));
+
+const iconoDescarga = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>';
+---
+<Base lang={lang} title={t.meta.title} description={t.meta.description}>
+  <header class="topbar">
+    <nav class="wrap topbar-inner" aria-label={t.a11y.navPrincipal}>
+      <a class="brand" href="#inicio" aria-label={t.a11y.inicio}>
+        <Logo size={34} />
+        <span class="brand-name">Linum <span>Estudio</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#trabajos">{t.nav.trabajos}</a></li>
+        <li><a href="#configurador">{t.nav.telas}</a></li>
+        <li><a href="#precios">{t.nav.precios}</a></li>
+        <li><a href="#visitanos">{t.nav.visita}</a></li>
+      </ul>
+      <details class="lang" data-lang-menu>
+        <summary aria-label={`${t.a11y.idioma}: ${idiomas[lang].nombre}`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>
+          {idiomas[lang].corto}
+        </summary>
+        <ul>
+          {langs.map((l) => (
+            <li>
+              <a href={rutaDe(l)} hreflang={l} lang={l} aria-current={l === lang ? 'page' : undefined}>
+                {idiomas[l].nombre}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <a class="btn btn-secondary btn-small" href={contacto.catalogo.href} download aria-label={t.a11y.descargarPdf}>
+        <Fragment set:html={iconoDescarga} />
+        <span class="btn-label">{t.nav.catalogo}</span>
+      </a>
+    </nav>
+  </header>
+
+  <main id="contenido">
+    <section id="inicio" class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">{t.hero.eyebrow}</p>
+          <h1>{t.hero.titulo} <em>{t.hero.tituloEm}</em></h1>
+          <p class="lede">{t.hero.lede}</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href={contacto.catalogo.href} download>
+              <Fragment set:html={iconoDescarga} />
+              {t.hero.descargar}
+            </a>
+            <a class="btn btn-secondary" href="#configurador">{t.hero.disenar}</a>
+          </div>
+          <ul class="facts" aria-label={t.a11y.resumen}>
+            <li><strong>{telas.length}</strong> {t.hero.telas}</li>
+            <li><strong>3</strong> {t.hero.maderas}</li>
+            <li>{t.hero.desde} <strong>{euros(lang, precioDesde)}</strong></li>
+          </ul>
+        </div>
+        <figure class="hero-media">
+          <Image src={hero.imagen} alt={t.trabajos.items[hero.slug].alt} widths={[480, 720, 960]} sizes="(min-width: 960px) 40vw, 92vw" loading="eager" fetchpriority="high" />
+        </figure>
+      </div>
+    </section>
+
+    <section id="trabajos" class="section" aria-labelledby="trabajos-title">
+      <div class="wrap">
+        <header class="section-head section-head-row">
+          <div>
+            <p class="eyebrow">{t.trabajos.eyebrow}</p>
+            <h2 id="trabajos-title">{t.trabajos.titulo}</h2>
+          </div>
+          <a class="btn btn-secondary" href={contacto.instagram} target="_blank" rel="noopener">
+            {t.trabajos.instagram} <span aria-hidden="true">↗</span>
+          </a>
+        </header>
+        <ul class="gallery">
+          {galeria.map((g) => (
+            <li>
+              <figure>
+                <Image src={g.imagen} alt={t.trabajos.items[g.slug].alt} widths={[360, 540, 720]} sizes="(min-width: 1100px) 24rem, (min-width: 640px) 45vw, 92vw" />
+                <figcaption>{t.trabajos.items[g.slug].pie}</figcaption>
+              </figure>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <Configurador lang={lang} />
+
+    <section id="precios" class="section" aria-labelledby="precios-title">
+      <div class="wrap precios-grid">
+        <header class="section-head">
+          <p class="eyebrow">{t.precios.eyebrow}</p>
+          <h2 id="precios-title">{t.precios.titulo}</h2>
+          <p class="lede">{t.precios.lede}</p>
+        </header>
+        <div class="price-card">
+          <dl class="price-list">
+            {tarifas.map((x) => (
+              <div>
+                <dt>{x.medidas}</dt>
+                <dd>{euros(lang, x.precio)}</dd>
+              </div>
+            ))}
+          </dl>
+          <dl class="price-extras">
+            <div><dt>{t.precios.enmarcado}</dt><dd>+{euros(lang, enmarcado.precio)}</dd></div>
+            <div><dt>{t.precios.diptico}</dt><dd>−{diptico.descuento * 100} %</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section id="catalogo" class="section catalogo" aria-labelledby="catalogo-title">
+      <div class="wrap catalogo-grid">
+        <a class="catalogo-cover" href={contacto.catalogo.href} download tabindex="-1" aria-hidden="true">
+          <Image src={portada} alt="" widths={[360, 540]} sizes="(min-width: 960px) 22rem, 70vw" />
+        </a>
+        <div class="catalogo-copy">
+          <p class="eyebrow">{t.catalogo.eyebrow}</p>
+          <h2 id="catalogo-title">{t.catalogo.titulo}</h2>
+          <p class="lede">{t.catalogo.lede(contacto.catalogo.paginas)}</p>
+          <a class="btn btn-primary" href={contacto.catalogo.href} download hreflang="es">
+            <Fragment set:html={iconoDescarga} />
+            {t.catalogo.descargar}
+            <span class="btn-meta">PDF · {pdfMb} MB{t.catalogo.idiomaPdf && ` · ${t.catalogo.idiomaPdf}`}</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="visitanos" class="section" aria-labelledby="visita-title">
+      <div class="wrap visita-grid">
+        <header class="section-head">
+          <p class="eyebrow">{t.visita.eyebrow}</p>
+          <h2 id="visita-title">{t.visita.titulo}</h2>
+          <p class="lede">
+            {t.visita.ledeAntes}
+            <a href={contacto.muestrario.instagram} target="_blank" rel="noopener">{contacto.muestrario.nombre}</a>{t.visita.ledeDespues}
+          </p>
+        </header>
+        <ul class="contact-list">
+          <li>
+            <span class="contact-label">{t.visita.direccion}</span>
+            <a href={contacto.mapa} target="_blank" rel="noopener">{contacto.direccion[0]}<br />{contacto.direccion[1]}</a>
+          </li>
+          <li>
+            <span class="contact-label">{t.visita.telefono}</span>
+            <a href={contacto.telefonoHref}>{contacto.telefono}</a>
+          </li>
+          <li>
+            <span class="contact-label">{t.visita.instagram}</span>
+            <a href={contacto.instagram} target="_blank" rel="noopener">{contacto.instagramUser}</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="brand">
+        <Logo size={28} />
+        <span class="brand-name">Linum <span>Estudio</span></span>
+      </span>
+      <p>{t.footer}</p>
+    </div>
+  </footer>
+</Base>
+
+<script>
+  // Cierra el menú de idioma al pulsar fuera o con Escape
+  const menu = document.querySelector<HTMLDetailsElement>('[data-lang-menu]');
+  if (menu) {
+    document.addEventListener('click', (e) => { if (menu.open && !menu.contains(e.target as Node)) menu.open = false; });
+    menu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.open) { menu.open = false; menu.querySelector('summary')?.focus(); }
+    });
+  }
+</script>
+
+<style>
+  /* —— Barra superior: única capa translúcida, flota sobre el contenido —— */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in oklab, var(--surface), transparent 18%);
+    backdrop-filter: saturate(1.4) blur(18px);
+    -webkit-backdrop-filter: saturate(1.4) blur(18px);
+    border-bottom: 1px solid color-mix(in oklab, var(--rule), transparent 30%);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .topbar { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  }
+  .topbar-inner { display: flex; align-items: center; gap: 0.75rem; min-height: 64px; }
+  .brand { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; min-height: 44px; }
+  .brand-name { font: 600 1.375rem / 1 var(--font-display); letter-spacing: 0.02em; }
+  .brand-name span { color: var(--ink-2); font-weight: 500; }
+  .nav-links { display: none; list-style: none; margin: 0 0 0 auto; padding: 0; gap: 0.25rem; }
+  .nav-links a {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.85rem; border-radius: 999px;
+    text-decoration: none; color: var(--ink-2); font-size: var(--step--1);
+  }
+  .nav-links a:hover { color: var(--ink); background: var(--sunken); }
+  .lang { margin-left: auto; }
+  .btn-small { min-height: 44px; padding: 0.5rem 1.1rem; font-size: var(--step--1); }
+  @media (min-width: 820px) {
+    .nav-links { display: flex; }
+    .lang { margin-left: 0; }
+  }
+
+  /* —— Hero —— */
+  .hero { padding-block: clamp(2.5rem, 1.5rem + 4vw, 6rem) clamp(3rem, 2rem + 4vw, 6rem); }
+  .hero-grid { display: grid; gap: clamp(2rem, 1rem + 4vw, 5rem); align-items: center; }
+  @media (min-width: 960px) { .hero-grid { grid-template-columns: 1.15fr 1fr; } }
+  .hero-copy { display: grid; gap: 1.5rem; justify-items: start; }
+  .hero h1 { font-size: var(--step-3); max-width: 12ch; }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
+  .facts { list-style: none; padding: 1.5rem 0 0; margin: 0.5rem 0 0; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: var(--step--1); }
+  .facts strong { color: var(--ink); font: 500 var(--step-1) / 1 var(--font-display); }
+  .hero-media { margin: 0; }
+  .hero-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); }
+
+  /* —— Galería —— */
+  .section-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1.5rem; }
+  .section-head-row > div { display: grid; gap: 1rem; }
+  .gallery { list-style: none; margin: 0; padding: 0; columns: 1; column-gap: 1.25rem; }
+  @media (min-width: 640px) { .gallery { columns: 2; } }
+  @media (min-width: 1100px) { .gallery { columns: 3; } }
+  .gallery li { break-inside: avoid; margin-bottom: 1.5rem; }
+  .gallery figure { margin: 0; display: grid; gap: 0.6rem; }
+  .gallery img { width: 100%; border-radius: var(--radius); }
+  .gallery figcaption { font-size: var(--step--1); color: var(--ink-2); }
+
+  /* —— Precios —— */
+  .precios-grid { display: grid; gap: 2rem; align-items: start; }
+  @media (min-width: 960px) { .precios-grid { grid-template-columns: 1fr 1.1fr; } }
+  .price-card { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--raised); padding: clamp(1.25rem, 1rem + 1.5vw, 2.25rem); display: grid; gap: 1.5rem; }
+  .price-list, .price-extras { margin: 0; display: grid; }
+  .price-list div, .price-extras div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding-block: 0.9rem; border-bottom: 1px solid var(--rule); }
+  .price-list div:last-child { border-bottom: 0; }
+  .price-list dd { margin: 0; font: 600 var(--step-2) / 1 var(--font-display); font-variant-numeric: lining-nums tabular-nums; }
+  .price-extras { background: var(--sunken); border-radius: 10px; padding-inline: 1rem; }
+  .price-extras div:last-child { border-bottom: 0; }
+  .price-extras dt { color: var(--ink-2); }
+  .price-extras dd { margin: 0; font-weight: 500; white-space: nowrap; }
+
+  /* —— Catálogo —— */
+  .catalogo { background: var(--accent-soft); }
+  .catalogo-grid { display: grid; gap: clamp(2rem, 1rem + 4vw, 5rem); align-items: center; }
+  @media (min-width: 820px) { .catalogo-grid { grid-template-columns: minmax(0, 22rem) 1fr; } }
+  .catalogo-cover { display: block; width: min(72%, 22rem); justify-self: center; transform: rotate(-2deg); transition: transform 0.35s var(--ease); }
+  @media (min-width: 820px) { .catalogo-cover { width: 100%; } }
+  .catalogo-cover:hover { transform: rotate(0deg) translateY(-4px); }
+  .catalogo-cover img { border-radius: 6px; box-shadow: 0 30px 50px -20px rgb(30 40 25 / 0.45), 0 0 0 1px rgb(0 0 0 / 0.06); }
+  .catalogo-copy { display: grid; gap: 1.25rem; justify-items: start; }
+  .catalogo-copy h2 { font-size: var(--step-3); }
+  .btn-meta { font-size: var(--step--1); opacity: 0.8; padding-left: 0.6rem; margin-left: 0.1rem; border-left: 1px solid currentColor; }
+
+  /* —— Visita —— */
+  .visita-grid { display: grid; gap: 2rem; }
+  @media (min-width: 960px) { .visita-grid { grid-template-columns: 1.2fr 1fr; align-items: end; } }
+  .visita-grid .lede a { color: var(--accent); text-underline-offset: 3px; }
+  .contact-list { list-style: none; margin: 0; padding: 0; display: grid; }
+  .contact-list li { display: grid; gap: 0.25rem; padding-block: 1.1rem; border-top: 1px solid var(--rule); }
+  .contact-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .contact-label { font-size: var(--step--1); color: var(--ink-2); }
+  .contact-list a { font: 500 var(--step-1) / 1.35 var(--font-display); font-size: 1.5rem; text-decoration: none; }
+  .contact-list a:hover { color: var(--accent); }
+
+  .footer { border-top: 1px solid var(--rule); padding-block: 2rem; color: var(--ink-2); font-size: var(--step--1); }
+  .footer-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+  .footer .brand-name { font-size: 1.125rem; color: var(--ink); }
+
+  /* —— Selector de idioma —— */
+  .lang { position: relative; }
+  .lang summary {
+    list-style: none; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 44px; min-width: 44px;
+    padding: 0 0.75rem; border-radius: 999px; cursor: pointer; color: var(--ink-2); font-size: var(--step--1); font-weight: 500;
+  }
+  .lang summary::-webkit-details-marker { display: none; }
+  .lang summary svg { width: 1.1em; height: 1.1em; }
+  .lang summary:hover, .lang[open] summary { color: var(--ink); background: var(--sunken); }
+  .lang ul {
+    position: absolute; right: 0; top: calc(100% + 0.4rem); z-index: 60; min-width: 11rem;
+    list-style: none; margin: 0; padding: 0.4rem; border-radius: 14px;
+    background: var(--raised); border: 1px solid var(--rule);
+    box-shadow: 0 16px 40px -16px rgb(40 30 20 / 0.3);
+  }
+  .lang a {
+    display: flex; align-items: center; min-height: 44px; padding: 0 0.85rem; border-radius: 10px;
+    text-decoration: none; color: var(--ink);
+  }
+  .lang a:hover { background: var(--sunken); }
+  .lang a[aria-current='page'] { font-weight: 500; color: var(--accent); }
+  .lang a[aria-current='page']::after { content: '✓'; margin-left: auto; }
+  @media (max-width: 479px) {
+    .btn-small { padding: 0; width: 44px; }
+    .btn-small .btn-label { display: none; }
+  }
+</style>

@@ -278,8 +278,10 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
 
       const base = Number(tamano.dataset.precio);
       const conMarco = marco.value !== 'sin';
-      const unidad = base + (conMarco ? ENMARCADO : 0);
-      const segundo = esDiptico ? unidad * (1 - DESCUENTO) : 0;
+      // El descuento del díptico es del segundo tapiz; cada tapiz lleva su marco a precio completo
+      const piezas = esDiptico ? 2 : 1;
+      const marcos = conMarco ? ENMARCADO * piezas : 0;
+      const segundo = esDiptico ? base * (1 - DESCUENTO) : 0;
 
       fabrics.forEach((img) => { if (img.getAttribute('src') !== tela.dataset.src) img.src = tela.dataset.src!; });
       frames.style.setProperty('--w', tamano.dataset.ancho!);
@@ -292,8 +294,8 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       detalle.textContent = `${esDiptico ? `${textos.diptico} · ` : ''}${tamano.value} cm · ${marco.dataset.nombre}`;
 
       const filas: [string, string][] = [[`${textos.tapiz} ${tamano.value}`, euros(base)]];
-      if (conMarco) filas.push([marco.dataset.nombre!, `+${euros(ENMARCADO)}`]);
       if (esDiptico) filas.push([textos.segundo, `+${euros(segundo)}`]);
+      if (conMarco) filas.push([`${marco.dataset.nombre}${esDiptico ? ' × 2' : ''}`, `+${euros(marcos)}`]);
       breakdown.replaceChildren(
         ...filas.map(([dt, dd]) => {
           const row = document.createElement('div');
@@ -301,7 +303,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
           return row;
         })
       );
-      total.textContent = precio.textContent = euros(unidad + segundo);
+      total.textContent = precio.textContent = euros(base + segundo + marcos);
 
       const mensaje = textos.mensajes[`${esDiptico}-${conMarco}`]
         .replace('{tela}', tela.dataset.nombre!)
@@ -475,21 +477,26 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
 
     // Compartir el diseño como imagen: el menú del sistema si admite archivos, si no se descarga.
     // Safari solo deja abrir el menú justo después del toque, así que la imagen se prepara antes,
-    // cuando el diseño lleva un momento sin cambiar (y han acabado las transiciones), y al pulsar
-    // se comparte la que ya está hecha. Va sola, sin texto: WhatsApp e Instagram descartan la
+    // cuando el diseño lleva un momento sin cambiar, y al pulsar se comparte la que ya está hecha
+    // si sigue siendo la de lo que se ve; si no, se hace en ese momento. Va sola, sin texto: WhatsApp e Instagram descartan la
     // imagen si la acompaña un texto, y la propia imagen ya lleva la marca y el teléfono.
     const compartir = $<HTMLButtonElement>('[data-compartir]');
     let lista: { clave: string; archivo: File } | null = null;
     let espera = 0;
-    const clave = () => `${wall.dataset.room}|${wall.dataset.foto}|${miFoto.src}|${new FormData(form).toString()}|${wall.getAttribute('style')}`;
-    const preparar = async () => {
+    // Huella de lo que se ve: estancia, foto, elecciones del formulario y colocación del tapiz
+    const clave = () =>
+      [wall.dataset.room, wall.dataset.foto, miFoto.src, new URLSearchParams(new FormData(form) as never), wall.getAttribute('style')].join('|');
+    // Se dibuja cuando el tapiz ha terminado de moverse o crecer, para no capturarlo a medio camino;
+    // si algo cambia mientras se dibuja, se vuelve a hacer con lo nuevo
+    const preparar = async (): Promise<File> => {
+      await Promise.all(wall.getAnimations({ subtree: true }).map((a) => a.finished.catch(() => {})));
       const c = clave();
       if (lista?.clave === c) return lista.archivo;
       const blob = await imagenDiseno(wall, {
         nombre: nombre.textContent!, detalle: detalle.textContent!, precio: total.textContent!, marca: textos.marca,
       });
-      const slug = checked('tela').value;
-      lista = { clave: c, archivo: new File([blob], `linum-${slug}.jpg`, { type: 'image/jpeg' }) };
+      if (clave() !== c) return preparar();
+      lista = { clave: c, archivo: new File([blob], `linum-${checked('tela').value}.jpg`, { type: 'image/jpeg' }) };
       return lista.archivo;
     };
     const anticipar = () => {

@@ -1,5 +1,6 @@
 /**
- * Dibuja en un canvas lo que se ve en la vista previa del configurador (la estancia y el tapiz)
+ * Dibuja en un canvas lo que se ve en la vista previa del configurador (la estancia y el tapiz),
+ * recortado como la pared: en móvil solo se ve una franja de la escena y la imagen es esa franja,
  * con un pie de tela, medida, marco y precio, y lo devuelve como JPEG para compartir.
  * Copia la posición y el tamaño de cada elemento tal como los pinta el navegador, así la imagen
  * coincide con la vista previa sin repetir los cálculos de colocación.
@@ -24,7 +25,7 @@ function cubrir(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number,
 
 export async function imagenDiseno(wall: HTMLElement, pie: Pie): Promise<Blob> {
   const escena = wall.querySelector<HTMLElement>('.scene')!;
-  const caja = escena.getBoundingClientRect();
+  const caja = wall.getBoundingClientRect();
   const k = ANCHO / caja.width;
   const alto = Math.round(caja.height * k);
   const css = getComputedStyle(document.documentElement);

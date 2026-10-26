@@ -27,11 +27,16 @@ const estanciasFoto = [
 ] as const;
 
 export type EstanciaFoto = (typeof estanciasFoto)[number];
-export type EstanciaId = 'cerca' | EstanciaFoto['id'];
+/** 'foto' es la pared del cliente: sube su foto y la escala sale de un folio A4 pegado en ella. */
+export type EstanciaId = 'cerca' | EstanciaFoto['id'] | 'foto';
 export const estancias: { id: EstanciaId; foto?: EstanciaFoto }[] = [
   { id: 'cerca' },
   ...estanciasFoto.map((foto) => ({ id: foto.id, foto })),
+  { id: 'foto' },
 ];
+
+/** El folio de referencia, en horizontal (cm). */
+export const A4 = { ancho: 29.7, alto: 21 };
 
 /** Borde izquierdo del recorte, centrado en el hueco sin salirse de la foto. */
 export const recorteX = (e: EstanciaFoto) => Math.min(Math.max(e.cx - VISTA / 2, 0), FOTO.ancho - VISTA);

@@ -39,10 +39,10 @@ export async function imagenDiseno(wall: HTMLElement, pie: Pie): Promise<Blob> {
     return { x: (r.left - caja.left) * k, y: (r.top - caja.top) * k, w: r.width * k, h: r.height * k };
   };
 
-  // Fondo: la foto de la estancia, o la pared lisa con suelo en la vista de cerca
+  // Fondo: la foto de la estancia (o la del cliente), o la pared lisa con suelo en la vista de cerca
   ctx.fillStyle = token('--wall');
   ctx.fillRect(0, 0, ANCHO, alto);
-  const foto = [...escena.querySelectorAll<HTMLImageElement>('.estancia')].find((img) => img.offsetParent);
+  const foto = [...escena.querySelectorAll<HTMLImageElement>('[data-estancia]')].find((img) => img.offsetParent);
   if (foto) {
     await cargada(foto);
     const r = rect(foto);

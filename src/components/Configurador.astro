@@ -8,6 +8,7 @@ import { ui, idiomas, euros as eur, type Lang } from '../i18n/ui';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = ui[lang].config;
+const f = t.foto;
 const pct = diptico.descuento * 100;
 
 const grandes = await Promise.all(
@@ -57,6 +58,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
         >
           <div class="scene">
           <Estancias inicial={estanciaInicial.id} />
+          <img class="mi-foto" data-estancia="foto" data-mi-foto alt="" />
           <div
             class="frames"
             data-frames
@@ -78,6 +80,19 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
             ))}
           </div>
           <div class="floor" aria-hidden="true"></div>
+          </div>
+          <div class="calibrar" data-calibrar>
+            <div class="folio" data-folio><span class="folio-esquina" data-esquina></span></div>
+            <div class="foto-barra">
+              <p>{f.calibrar}</p>
+              <button type="button" class="foto-btn" data-sin-folio>{f.sinFolio}</button>
+              <button type="button" class="foto-btn foto-btn-ok" data-listo>{f.listo}</button>
+            </div>
+          </div>
+          <div class="foto-barra foto-acciones">
+            <p data-foto-ayuda data-aprox={f.aprox}>{f.mover}</p>
+            <button type="button" class="foto-btn" data-reajustar>{f.reajustar}</button>
+            <button type="button" class="foto-btn" data-cambiar>{f.cambiar}</button>
           </div>
         </div>
         <figcaption class="preview-caption" aria-live="polite">
@@ -101,6 +116,29 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
             ))}
           </div>
         </fieldset>
+
+        <dialog class="guia" data-guia aria-labelledby="guia-titulo">
+          <form method="dialog" class="guia-cerrar">
+            <button aria-label={f.cerrar}>×</button>
+          </form>
+          <h3 id="guia-titulo">{f.titulo}</h3>
+          <svg class="guia-dibujo" viewBox="0 0 320 150" aria-hidden="true">
+            <rect width="320" height="150" rx="10" class="g-pared" />
+            <rect y="128" width="320" height="22" class="g-suelo" />
+            <rect x="133" y="38" width="54" height="38" rx="1" class="g-folio" />
+            <text x="160" y="62" class="g-texto">A4</text>
+            <path d="M88 128v-30a10 10 0 0 1 10-10h124a10 10 0 0 1 10 10v30" class="g-sofa" />
+            <rect x="78" y="100" width="164" height="28" rx="8" class="g-sofa" />
+          </svg>
+          <p>{f.intro}</p>
+          <ol>{f.pasos.map((p) => <li>{p}</li>)}</ol>
+          <p class="hint">{f.privacidad}</p>
+          <label class="btn btn-primary btn-block">
+            <input type="file" accept="image/*" data-archivo />
+            {f.subir}
+          </label>
+          <form method="dialog"><button class="btn btn-secondary btn-block">{f.ahoraNo}</button></form>
+        </dialog>
       </figure>
 
       <form class="controls" data-config data-textos={JSON.stringify(textos)} onsubmit="return false">
@@ -208,7 +246,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
 </section>
 
 <script>
-  import { estancias, colocar, medidasColgado } from '../data/estancias';
+  import { estancias, colocar, medidasColgado, A4 } from '../data/estancias';
   import { imagenDiseno } from '../scripts/imagen-diseno';
 
   const form = document.querySelector<HTMLFormElement>('[data-config]');
@@ -277,18 +315,22 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
 
     // Coloca el tapiz en la foto de la estancia, a escala y sin tapar lámparas ni jarrones
     const wall = $<HTMLElement>('[data-wall]');
-    const colgar = () => {
-      const fondo = document.querySelector<HTMLInputElement>('input[name="fondo"]:checked')!.value;
-      wall.dataset.room = fondo;
-      const foto = estancias.find((e) => e.id === fondo)?.foto;
-      if (!foto) return;
+    const colgado = () => {
       const tamano = checked('tamano');
-      const { ancho, alto } = medidasColgado(
+      return medidasColgado(
         Number(tamano.dataset.ancho),
         Number(tamano.dataset.alto),
         checked('marco').value !== 'sin',
         form.querySelector<HTMLInputElement>('input[name="diptico"]')!.checked
       );
+    };
+    const colgar = () => {
+      const fondo = document.querySelector<HTMLInputElement>('input[name="fondo"]:checked')!.value;
+      wall.dataset.room = fondo;
+      if (fondo === 'foto') return pintarFoto();
+      const foto = estancias.find((e) => e.id === fondo)?.foto;
+      if (!foto) return;
+      const { ancho, alto } = colgado();
       const sitio = colocar(foto, ancho, alto);
       wall.style.setProperty('--fx', String(sitio.x));
       wall.style.setProperty('--fb', String(sitio.abajo));
@@ -296,6 +338,138 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       wall.style.setProperty('--y0', String(sitio.y0));
       wall.style.setProperty('--cy', String(sitio.cy));
     };
+
+    // Tu pared: la foto del cliente, que no sale del navegador. Un folio A4 pegado en la pared da la escala.
+    // Todo se guarda en fracciones de la foto: el folio (fu, fv, fw) y el centro del tapiz (u, v).
+    const miFoto = $<HTMLImageElement>('[data-mi-foto]');
+    const folio = $<HTMLElement>('[data-folio]');
+    const guia = $<HTMLDialogElement>('[data-guia]');
+    const ayuda = $<HTMLElement>('[data-foto-ayuda]');
+    const textoMover = ayuda.textContent!;
+    const ANCHO_SIN_FOLIO = 300; // cm de pared que suponemos en la foto si no hay folio
+    const pared = { fu: 0.5, fv: 0.45, fw: 0.1, u: 0.5, v: 0.45, anchoCm: ANCHO_SIN_FOLIO };
+    const limitar = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max);
+
+    // Dónde se pinta la foto en la pared: entera mientras se ajusta el folio, y a sangre centrada en él después
+    const encaje = () => {
+      const entera = wall.dataset.foto === 'calibrando';
+      const sw = wall.clientWidth;
+      const sh = wall.clientHeight;
+      const s = (entera ? Math.min : Math.max)(sw / miFoto.naturalWidth, sh / miFoto.naturalHeight);
+      const w = miFoto.naturalWidth * s;
+      const h = miFoto.naturalHeight * s;
+      const lado = (hueco: number, mide: number, f: number) =>
+        entera ? (hueco - mide) / 2 : limitar(hueco / 2 - f * mide, hueco - mide, 0);
+      return { x: lado(sw, w, pared.fu), y: lado(sh, h, pared.fv), w, h, sw, sh };
+    };
+
+    const pintarFoto = () => {
+      if (!wall.dataset.foto || !miFoto.naturalWidth) return;
+      const r = encaje();
+      Object.assign(miFoto.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+      if (wall.dataset.foto === 'calibrando') {
+        const w = pared.fw * r.w;
+        const h = (w * A4.alto) / A4.ancho;
+        Object.assign(folio.style, {
+          left: `${r.x + pared.fu * r.w - w / 2}px`, top: `${r.y + pared.fv * r.h - h / 2}px`, width: `${w}px`, height: `${h}px`,
+        });
+        return;
+      }
+      const cm = r.w / pared.anchoCm;
+      const centroY = r.y + pared.v * r.h;
+      wall.style.setProperty('--fx', String(((r.x + pared.u * r.w) / r.sw) * 100));
+      wall.style.setProperty('--fcm', String((cm / r.sw) * 100));
+      wall.style.setProperty('--fb', String(((r.sh - centroY - (colgado().alto * cm) / 2) / r.sh) * 100));
+    };
+    new ResizeObserver(pintarFoto).observe(wall);
+
+    // Arrastre con el dedo o el ratón; mover recibe el desplazamiento y el evento
+    const arrastrar = (el: HTMLElement, puede: () => boolean, mover: (dx: number, dy: number, e: PointerEvent) => void) => {
+      el.addEventListener('pointerdown', (e) => {
+        if (!puede()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        el.setPointerCapture(e.pointerId);
+        let px = e.clientX;
+        let py = e.clientY;
+        wall.classList.add('arrastrando');
+        const mv = (ev: PointerEvent) => { mover(ev.clientX - px, ev.clientY - py, ev); px = ev.clientX; py = ev.clientY; };
+        const fin = () => {
+          el.removeEventListener('pointermove', mv);
+          el.removeEventListener('pointerup', fin);
+          el.removeEventListener('pointercancel', fin);
+          wall.classList.remove('arrastrando');
+          anticipar();
+        };
+        el.addEventListener('pointermove', mv);
+        el.addEventListener('pointerup', fin);
+        el.addEventListener('pointercancel', fin);
+      });
+    };
+    arrastrar(folio, () => true, (dx, dy) => {
+      const r = encaje();
+      pared.fu = limitar(pared.fu + dx / r.w, 0, 1);
+      pared.fv = limitar(pared.fv + dy / r.h, 0, 1);
+      pintarFoto();
+    });
+    // La esquina estira el folio desde su centro, sin perder la proporción del A4
+    arrastrar($('[data-esquina]'), () => true, (_dx, _dy, e) => {
+      const r = encaje();
+      const caja = wall.getBoundingClientRect();
+      const cx = caja.left + r.x + pared.fu * r.w;
+      const cy = caja.top + r.y + pared.fv * r.h;
+      const mitad = Math.max(Math.abs(e.clientX - cx), (Math.abs(e.clientY - cy) * A4.ancho) / A4.alto);
+      pared.fw = limitar((2 * mitad) / r.w, 0.01, 1);
+      pintarFoto();
+    });
+    arrastrar(frames, () => wall.dataset.room === 'foto' && wall.dataset.foto === 'lista', (dx, dy) => {
+      const r = encaje();
+      pared.u = limitar(pared.u + dx / r.w, 0, 1);
+      pared.v = limitar(pared.v + dy / r.h, 0, 1);
+      pintarFoto();
+    });
+
+    const colocarEnFoto = (conFolio: boolean) => {
+      pared.anchoCm = conFolio ? A4.ancho / pared.fw : ANCHO_SIN_FOLIO;
+      pared.u = pared.fu;
+      pared.v = pared.fv;
+      ayuda.textContent = conFolio ? textoMover : ayuda.dataset.aprox!;
+      ayuda.toggleAttribute('data-aviso', !conFolio);
+      wall.dataset.foto = 'lista';
+      pintarFoto();
+      anticipar();
+    };
+    $('[data-listo]').addEventListener('click', () => colocarEnFoto(true));
+    $('[data-sin-folio]').addEventListener('click', () => colocarEnFoto(false));
+    $('[data-reajustar]').addEventListener('click', () => { wall.dataset.foto = 'calibrando'; pintarFoto(); });
+    $('[data-cambiar]').addEventListener('click', () => guia.showModal());
+
+    $<HTMLInputElement>('[data-archivo]').addEventListener('change', async (e) => {
+      const input = e.currentTarget as HTMLInputElement;
+      const archivo = input.files?.[0];
+      input.value = '';
+      if (!archivo) return;
+      if (miFoto.src.startsWith('blob:')) URL.revokeObjectURL(miFoto.src);
+      miFoto.src = URL.createObjectURL(archivo);
+      await miFoto.decode().catch(() => {});
+      Object.assign(pared, { fu: 0.5, fv: 0.45, fw: 0.1 });
+      wall.dataset.foto = 'calibrando';
+      guia.close();
+      pintarFoto();
+    });
+
+    // Al elegir «Tu pared» sin foto se abre la guía; si se cierra sin foto, se vuelve a la estancia de antes
+    let anterior = wall.dataset.room!;
+    $('[data-rooms]').addEventListener('change', (e) => {
+      const fondo = (e.target as HTMLInputElement).value;
+      if (fondo !== 'foto') anterior = fondo;
+      else if (!wall.dataset.foto) guia.showModal();
+    });
+    guia.addEventListener('close', () => {
+      if (wall.dataset.foto) return;
+      document.querySelector<HTMLInputElement>(`input[name="fondo"][value="${anterior}"]`)!.checked = true;
+      colgar();
+    });
 
     form.addEventListener('change', update);
     update();
@@ -306,7 +480,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     const compartir = $<HTMLButtonElement>('[data-compartir]');
     let lista: { clave: string; archivo: File } | null = null;
     let espera = 0;
-    const clave = () => `${wall.dataset.room}|${new FormData(form).toString()}|${wall.getAttribute('style')}`;
+    const clave = () => `${wall.dataset.room}|${wall.dataset.foto}|${miFoto.src}|${new FormData(form).toString()}|${wall.getAttribute('style')}`;
     const preparar = async () => {
       const c = clave();
       if (lista?.clave === c) return lista.archivo;
@@ -435,6 +609,70 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     transition: width 0.3s var(--ease), height 0.3s var(--ease), background-color 0.3s var(--ease);
   }
 
+  /* —— Tu pared: la foto del cliente, colocada por el script en px de la pared —— */
+  .wall[data-room='foto'] .scene { top: 0; height: 100%; aspect-ratio: auto; }
+  .mi-foto { position: absolute; max-width: none; display: none; }
+  .wall[data-room='foto'][data-foto] .mi-foto { display: block; }
+  .wall[data-room='foto']:not([data-foto='lista']) .frames { display: none; }
+  .wall[data-room='foto'] .frames { touch-action: none; cursor: grab; }
+  .wall.arrastrando .frames { cursor: grabbing; }
+  .wall.arrastrando :is(.frames, .frame, .mi-foto) { transition: none; }
+
+  .calibrar { position: absolute; inset: 0; background: rgb(20 15 10 / 0.25); }
+  .folio {
+    position: absolute; touch-action: none; cursor: move;
+    border: 2px solid #fff; background: rgb(255 255 255 / 0.18);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 0 0 9999px rgb(20 15 10 / 0.2);
+  }
+  .folio-esquina {
+    position: absolute; right: -14px; bottom: -14px; width: 28px; height: 28px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 4px rgb(0 0 0 / 0.4); cursor: nwse-resize; touch-action: none;
+  }
+  .foto-barra {
+    position: absolute; inset: auto 0.5rem 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem;
+    padding: 0.5rem 0.5rem 0.5rem 0.85rem; border-radius: 14px;
+    background: color-mix(in oklab, var(--surface) 92%, transparent); backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px -6px rgb(0 0 0 / 0.3);
+  }
+  .foto-barra p { flex: 1 1 12rem; margin: 0; font-size: var(--step--1); line-height: 1.3; }
+  .foto-btn {
+    min-height: 40px; padding: 0 0.9rem; border-radius: 999px; border: 1px solid var(--rule);
+    background: var(--surface); color: var(--ink); font: 500 var(--step--1) / 1 var(--font-body); cursor: pointer;
+  }
+  .foto-btn:hover { border-color: var(--ink-2); }
+  .foto-btn-ok { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+
+  .calibrar, .foto-acciones { display: none; }
+  .wall[data-room='foto'][data-foto='calibrando'] .calibrar { display: block; }
+  .wall[data-room='foto'][data-foto='lista'] .foto-acciones { display: flex; }
+
+  .guia {
+    width: min(100% - 2rem, 32rem); max-height: calc(100dvh - 2rem); padding: 1.5rem; overflow: auto;
+    border: 0; border-radius: var(--radius); background: var(--surface); color: var(--ink);
+    box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.45);
+  }
+  .guia[open] { display: grid; gap: 1rem; }
+  .guia::backdrop { background: rgb(20 15 10 / 0.5); }
+  .guia h3 { font-size: var(--step-2); padding-right: 2rem; }
+  .guia p, .guia ol { margin: 0; }
+  .guia ol { display: grid; gap: 0.6rem; padding-left: 1.25rem; }
+  .guia li::marker { color: var(--accent); font-weight: 600; }
+  .guia form { margin: 0; }
+  .guia-cerrar { position: absolute; top: 0.75rem; right: 0.75rem; }
+  .guia-cerrar button {
+    width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--ink-2);
+    font-size: 1.6rem; line-height: 1; cursor: pointer;
+  }
+  .guia-cerrar button:hover { background: var(--raised); color: var(--ink); }
+  .guia label input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .guia label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .guia-dibujo { width: 100%; height: auto; }
+  .g-pared { fill: var(--wall); }
+  .g-suelo { fill: color-mix(in oklab, var(--wall), black 8%); }
+  .g-folio { fill: #fff; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; }
+  .g-texto { fill: var(--accent); font: 600 12px var(--font-body); text-anchor: middle; }
+  .g-sofa { fill: color-mix(in oklab, var(--wall), black 22%); }
+
   .rooms { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 0.6rem; }
   .rooms legend { display: block; padding: 0; margin-bottom: 0.6rem; font: 500 var(--step--1) / 1.4 var(--font-body); }
   .rooms-note { color: var(--ink-2); font-weight: 400; }
@@ -544,6 +782,12 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     .preview-price { display: block; flex: none; font: 600 var(--step-1) / 1 var(--font-display); color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
     .rooms legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .room-chip span { min-height: 40px; padding: 0 0.9rem; }
+    /* Tu pared: la barra ocupa lo mínimo de una vista tan baja */
+    .foto-barra { inset: auto 0.4rem 0.4rem; padding: 0.35rem; gap: 0.35rem; border-radius: 12px; }
+    .foto-barra p { flex-basis: 100%; padding: 0.15rem 0.4rem 0; font-size: 0.8125rem; }
+    .foto-acciones:not(:has([data-aviso])) { left: auto; }
+    .foto-acciones p:not([data-aviso]) { display: none; }
+    .foto-btn { min-height: 34px; padding: 0 0.75rem; font-size: 0.8125rem; }
 
     .controls { gap: 2rem; }
     legend { margin-bottom: 0.75rem; }

@@ -21,7 +21,8 @@ const es = {
   meta: {
     title: 'Linum Estudio · Tapices enmarcados y personalizados en Valencia',
     description:
-      'Tapices de tela enmarcados en madera y hechos a medida en Valencia. Elige entre más de 20 telas de ikat y florales, la medida y el marco. Descarga el catálogo 2026.',
+      'Tapices de tela enmarcados en madera y hechos a medida en Valencia. Más de 20 telas de ikat y florales: elige tela, medida y marco y pruébalo en tu pared.',
+    imagenAlt: 'Tres tapices de Linum Estudio enmarcados en madera: en un salón, en una pared verde y en un patio',
   },
   a11y: {
     saltar: 'Saltar al contenido',
@@ -144,9 +145,10 @@ export type Diccionario = typeof es;
 
 const en: Diccionario = {
   meta: {
-    title: 'Linum Estudio · Framed and custom fabric wall hangings in Valencia',
+    title: 'Linum Estudio · Framed fabric wall hangings in Valencia',
     description:
-      'Fabric wall hangings framed in wood and made to measure in Valencia, Spain. Choose from over 20 ikat and floral fabrics, the size and the frame. Download the 2026 catalogue.',
+      'Wood-framed fabric wall hangings, made to measure in Valencia, Spain. Over 20 ikat and floral fabrics: pick fabric, size and frame and try it on your wall.',
+    imagenAlt: 'Three Linum Estudio wood-framed fabric pieces: in a living room, on a green wall and in a patio',
   },
   a11y: {
     saltar: 'Skip to content',
@@ -269,7 +271,8 @@ const de: Diccionario = {
   meta: {
     title: 'Linum Estudio · Gerahmte Stoffbilder nach Maß aus Valencia',
     description:
-      'Stoffbilder, in Holz gerahmt und nach Maß gefertigt in Valencia. Wählen Sie aus über 20 Ikat- und Blumenstoffen, Größe und Rahmen. Laden Sie den Katalog 2026 herunter.',
+      'In Holz gerahmte Stoffbilder nach Maß aus Valencia. Über 20 Ikat- und Blumenstoffe: Stoff, Größe und Rahmen wählen und an der eigenen Wand ansehen.',
+    imagenAlt: 'Drei in Holz gerahmte Stoffbilder von Linum Estudio: im Wohnzimmer, an einer grünen Wand und im Innenhof',
   },
   a11y: {
     saltar: 'Zum Inhalt springen',
@@ -390,9 +393,10 @@ const de: Diccionario = {
 
 const fr: Diccionario = {
   meta: {
-    title: 'Linum Estudio · Tableaux en tissu encadrés et personnalisés à Valence',
+    title: 'Linum Estudio · Tableaux en tissu encadrés sur mesure, Valence',
     description:
-      'Tableaux en tissu encadrés de bois et faits sur mesure à Valence, en Espagne. Choisissez parmi plus de 20 tissus ikat et fleuris, la taille et le cadre. Téléchargez le catalogue 2026.',
+      'Tableaux en tissu encadrés de bois, faits sur mesure à Valence. Plus de 20 tissus ikat et fleuris : choisissez tissu, taille et cadre, et essayez-le chez vous.',
+    imagenAlt: 'Trois tableaux en tissu Linum Estudio encadrés de bois : dans un salon, sur un mur vert et dans un patio',
   },
   a11y: {
     saltar: 'Aller au contenu',

@@ -1,0 +1,258 @@
+---
+// Página principal: qué es Linum, los dos productos, el catálogo y dónde vernos
+import { Image } from 'astro:assets';
+import Sitio from '../layouts/Sitio.astro';
+import { contacto, trabajos, telas, mosaico, cuadrito, desde, type Producto } from '../data/estudio';
+import { ui, idiomas, rutaDe, euros, type Lang } from '../i18n/ui';
+import { iconoDescarga } from './iconos';
+import portada from '../assets/catalogo-portada.jpg';
+import fs from 'node:fs';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+
+// Mosaico de la cabecera: las fotos repartidas en columnas que se deslizan; cada columna va triplicada
+// para que el bucle no tenga salto ni huecos aunque la columna sea corta. Los pares suben y los impares bajan, a velocidades distintas.
+const COLUMNAS = 6;
+const columnas = Array.from({ length: COLUMNAS }, (_, c) => mosaico.filter((_, i) => i % COLUMNAS === c));
+const ritmos = [84, 102, 76, 96, 88, 108];
+const pdfBytes = fs.statSync('public' + contacto.catalogo.href).size;
+const pdfMb = (pdfBytes / 1024 / 1024).toLocaleString(idiomas[lang].intl, { maximumFractionDigits: 1 });
+
+// El encuadre (pos) deja a la vista las piezas al recortar la foto
+const productos: { id: Producto; pagina: 'linum' | 'cuadritos'; foto: string; pos: string }[] = [
+  { id: 'tapiz', pagina: 'linum', foto: 'diptico-salon', pos: '50% 0%' },
+  { id: 'cuadrito', pagina: 'cuadritos', foto: 'cuadritos-aparador', pos: '50% 45%' },
+];
+const fotoDe = (p: Producto, slug: string) => trabajos[p].find((x) => x.slug === slug)!;
+---
+<Sitio lang={lang} pagina="inicio" title={t.meta.title} description={t.meta.description}>
+  <section id="inicio" class="hero" data-hero>
+    <div class="mosaico" aria-hidden="true">
+      {columnas.map((col, c) => (
+        <div class="mosaico-col" style={`--dur:${ritmos[c]}s;--delay:-${ritmos[c] * (c % 3) / 3}s`}>
+          {[...col, ...col, ...col].map((src, i) => (
+            <Image
+              src={src}
+              alt=""
+              widths={[240, 400]}
+              sizes="(min-width: 960px) 16vw, 38vw"
+              loading={i < col.length && i < 2 ? 'eager' : 'lazy'}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+    <div class="wrap hero-inner">
+      <div class="hero-card">
+        <p class="eyebrow">{t.hero.eyebrow}</p>
+        <h1>{t.hero.titulo} <em>{t.hero.tituloEm}</em></h1>
+        <p class="lede">{t.hero.lede}</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#productos">{t.hero.ver}</a>
+          <a class="btn btn-secondary" href={contacto.catalogo.href} download>
+            <Fragment set:html={iconoDescarga} />
+            {t.hero.descargar}
+          </a>
+        </div>
+        <ul class="facts" aria-label={t.a11y.resumen}>
+          <li><strong>{telas.length}</strong> {t.hero.telas}</li>
+          <li><strong>{cuadrito.disenos.length}</strong> {t.hero.disenos}</li>
+          <li>{t.hero.desde} <strong>{euros(lang, Math.min(desde.tapiz, desde.cuadrito))}</strong></li>
+        </ul>
+      </div>
+    </div>
+    <button class="mosaico-pausa" type="button" aria-pressed="false" aria-label={t.a11y.pausar} data-pausa>
+      <svg class="icono-pausa" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+      <svg class="icono-play" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/></svg>
+    </button>
+  </section>
+
+  <section id="productos" class="section" aria-labelledby="productos-title">
+    <div class="wrap">
+      <header class="section-head">
+        <p class="eyebrow">{t.productos.eyebrow}</p>
+        <h2 id="productos-title">{t.productos.titulo}</h2>
+      </header>
+      <ul class="productos">
+        {productos.map((p) => {
+          const foto = fotoDe(p.id, p.foto);
+          const tp = t.productos[p.id];
+          return (
+            <li class="producto">
+              <Image src={foto.imagen} alt="" widths={[480, 720, 960]} sizes="(min-width: 820px) 36rem, 92vw" style={`object-position:${p.pos}`} />
+              <div class="producto-texto">
+                <h3><a href={rutaDe(lang, p.pagina)}>{tp.nombre}</a></h3>
+                <p>{tp.texto}</p>
+                <p class="producto-desde">{t.productos.desde} <strong>{euros(lang, desde[p.id])}</strong></p>
+                <span class="producto-ver" aria-hidden="true">{tp.ver} <span>→</span></span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  </section>
+
+  <section id="catalogo" class="section catalogo" aria-labelledby="catalogo-title">
+    <div class="wrap catalogo-grid">
+      <a class="catalogo-cover" href={contacto.catalogo.href} download tabindex="-1" aria-hidden="true">
+        <Image src={portada} alt="" widths={[360, 540]} sizes="(min-width: 960px) 22rem, 70vw" />
+      </a>
+      <div class="catalogo-copy">
+        <p class="eyebrow">{t.catalogo.eyebrow}</p>
+        <h2 id="catalogo-title">{t.catalogo.titulo}</h2>
+        <p class="lede">{t.catalogo.lede(contacto.catalogo.paginas)}</p>
+        <a class="btn btn-primary" href={contacto.catalogo.href} download hreflang="es">
+          <Fragment set:html={iconoDescarga} />
+          {t.catalogo.descargar}
+          <span class="btn-meta">PDF · {pdfMb} MB{t.catalogo.idiomaPdf && ` · ${t.catalogo.idiomaPdf}`}</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="visitanos" class="section" aria-labelledby="visita-title">
+    <div class="wrap visita-grid">
+      <header class="section-head">
+        <p class="eyebrow">{t.visita.eyebrow}</p>
+        <h2 id="visita-title">{t.visita.titulo}</h2>
+        <p class="lede">
+          {t.visita.ledeAntes}
+          <a href={contacto.muestrario.instagram} target="_blank" rel="noopener">{contacto.muestrario.nombre}</a>{t.visita.ledeDespues}
+        </p>
+      </header>
+      <ul class="contact-list">
+        <li>
+          <span class="contact-label">{t.visita.direccion}</span>
+          <a href={contacto.mapa} target="_blank" rel="noopener">{contacto.direccion[0]}<br />{contacto.direccion[1]}</a>
+        </li>
+        <li>
+          <span class="contact-label">{t.visita.telefono}</span>
+          <a href={contacto.telefonoHref}>{contacto.telefono}</a>
+        </li>
+        <li>
+          <span class="contact-label">{t.visita.instagram}</span>
+          <a href={contacto.instagram} target="_blank" rel="noopener">{contacto.instagramUser}</a>
+        </li>
+      </ul>
+    </div>
+  </section>
+</Sitio>
+
+<script>
+  // Pausa del mosaico de la cabecera
+  const hero = document.querySelector<HTMLElement>('[data-hero]');
+  const pausa = hero?.querySelector<HTMLButtonElement>('[data-pausa]');
+  pausa?.addEventListener('click', () => {
+    const pausado = pausa.getAttribute('aria-pressed') !== 'true';
+    pausa.setAttribute('aria-pressed', String(pausado));
+    hero!.toggleAttribute('data-pausado', pausado);
+  });
+</script>
+
+<style>
+  /* —— Hero —— */
+  .hero {
+    position: relative; isolation: isolate; overflow: hidden;
+    display: grid; align-items: center;
+    min-height: min(calc(100svh - 64px), 56rem);
+    padding-block: clamp(4.5rem, 3rem + 6vw, 7rem);
+  }
+  /* Velo claro sobre las fotos para que la tarjeta destaque sin esconderlas */
+  .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: color-mix(in oklab, var(--surface), transparent 72%); }
+  .mosaico {
+    position: absolute; z-index: -2; top: -2rem; bottom: -2rem; left: 50%; translate: -50% 0;
+    width: calc(100% + 4rem);
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem;
+  }
+  /* En móvil las columnas no caben: se centran las del medio y el resto queda fuera */
+  @media (max-width: 719px) {
+    .mosaico { width: calc(6 * 38vw + 5 * 0.75rem); }
+    /* La tarjeta ocupa casi todo el ancho: se baja para dejar una franja de fotos arriba */
+    .hero { align-items: end; padding-block: 10rem 1.5rem; }
+    .mosaico-pausa { top: 1rem; bottom: auto; }
+  }
+  .mosaico-col { animation: mosaico var(--dur) linear var(--delay) infinite; }
+  .mosaico-col:nth-child(even) { animation-direction: reverse; }
+  /* Margen en vez de gap: así un tercio exacto de la columna es una vuelta completa */
+  .mosaico-col img { display: block; width: 100%; height: auto; margin-bottom: 0.75rem; border-radius: 10px; }
+  @keyframes mosaico { to { translate: 0 calc(-100% / 3); } }
+  .hero[data-pausado] .mosaico-col { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) {
+    .mosaico-col { animation: none; }
+    .mosaico-pausa { display: none; }
+  }
+
+  .hero-inner { display: grid; justify-items: center; }
+  .hero-card {
+    display: grid; gap: 1.5rem; justify-items: start; max-width: 40rem;
+    padding: clamp(1.5rem, 1rem + 3vw, 3.25rem);
+    background: var(--raised);
+    border: 1px solid var(--rule); border-radius: calc(var(--radius) * 1.5);
+    box-shadow: 0 40px 80px -30px rgb(42 36 31 / 0.4), 0 10px 24px -12px rgb(42 36 31 / 0.25);
+  }
+  .mosaico-pausa {
+    position: absolute; right: var(--gutter); bottom: 1rem;
+    display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--raised); color: var(--ink); cursor: pointer;
+    box-shadow: 0 4px 12px -6px rgb(42 36 31 / 0.35);
+  }
+  .mosaico-pausa svg { width: 18px; height: 18px; }
+  .mosaico-pausa:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .mosaico-pausa .icono-play, .mosaico-pausa[aria-pressed='true'] .icono-pausa { display: none; }
+  .mosaico-pausa[aria-pressed='true'] .icono-play { display: block; }
+  .hero h1 { font-size: var(--step-3); max-width: 12ch; }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
+  .facts { list-style: none; padding: 1.5rem 0 0; margin: 0.5rem 0 0; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: var(--step--1); }
+  .facts strong { color: var(--ink); font: 500 var(--step-1) / 1 var(--font-display); }
+
+  /* —— Catálogo —— */
+  .catalogo { background: var(--accent-soft); }
+  .catalogo-grid { display: grid; gap: clamp(2rem, 1rem + 4vw, 5rem); align-items: center; }
+  @media (min-width: 820px) { .catalogo-grid { grid-template-columns: minmax(0, 22rem) 1fr; } }
+  .catalogo-cover { display: block; width: min(72%, 22rem); justify-self: center; transform: rotate(-2deg); transition: transform 0.35s var(--ease); }
+  @media (min-width: 820px) { .catalogo-cover { width: 100%; } }
+  .catalogo-cover:hover { transform: rotate(0deg) translateY(-4px); }
+  .catalogo-cover img { border-radius: 6px; box-shadow: 0 30px 50px -20px rgb(30 40 25 / 0.45), 0 0 0 1px rgb(0 0 0 / 0.06); }
+  .catalogo-copy { display: grid; gap: 1.25rem; justify-items: start; }
+  .catalogo-copy h2 { font-size: var(--step-3); }
+  .btn-meta { font-size: var(--step--1); opacity: 0.8; padding-left: 0.6rem; margin-left: 0.1rem; border-left: 1px solid currentColor; }
+
+  /* —— Visita —— */
+  .visita-grid { display: grid; gap: 2rem; }
+  @media (min-width: 960px) { .visita-grid { grid-template-columns: 1.2fr 1fr; align-items: end; } }
+  .visita-grid .lede a { color: var(--accent); text-underline-offset: 3px; }
+  .contact-list { list-style: none; margin: 0; padding: 0; display: grid; }
+  .contact-list li { display: grid; gap: 0.25rem; padding-block: 1.1rem; border-top: 1px solid var(--rule); }
+  .contact-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .contact-label { font-size: var(--step--1); color: var(--ink-2); }
+  .contact-list a { font: 500 var(--step-1) / 1.35 var(--font-display); font-size: 1.5rem; text-decoration: none; }
+  .contact-list a:hover { color: var(--accent); }
+
+
+  /* —— Productos: cada tarjeta entera lleva a su página —— */
+  .productos { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(1.25rem, 1rem + 1.5vw, 2rem); }
+  @media (min-width: 820px) { .productos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .producto {
+    position: relative; display: grid; grid-template-rows: auto 1fr; overflow: hidden;
+    border: 1px solid var(--rule); border-radius: calc(var(--radius) * 1.25); background: var(--raised);
+    transition: box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+  }
+  .producto:hover { transform: translateY(-3px); box-shadow: 0 30px 50px -30px rgb(42 36 31 / 0.4); }
+  .producto:has(a:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .producto img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
+  .producto-texto { display: grid; gap: 0.75rem; align-content: start; justify-items: center; text-align: center; padding: clamp(1.25rem, 1rem + 1.5vw, 2rem); }
+  .producto h3 { font-size: var(--step-2); }
+  .producto h3 a { text-decoration: none; }
+  .producto h3 a:focus-visible { outline: none; }
+  .producto h3 a::after { content: ''; position: absolute; inset: 0; }
+  .producto-texto > p:not(.producto-desde) { color: var(--ink-2); }
+  .producto-desde { color: var(--ink-2); }
+  .producto-desde strong { color: var(--ink); font: 600 var(--step-1) / 1 var(--font-display); }
+  .producto-ver { margin-top: 0.25rem; font-weight: 500; color: var(--accent); }
+  .producto-ver span { display: inline-block; transition: translate 0.2s var(--ease); }
+  .producto:hover .producto-ver span { translate: 0.25rem 0; }
+</style>

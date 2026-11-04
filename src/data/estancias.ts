@@ -81,8 +81,8 @@ export const MOLDURA = 3;
 export const SEPARACION_DIPTICO = 8;
 
 /** Ancho y alto totales que ocupa en la pared un tapiz (o un díptico), con el marco si lo lleva. */
-export function medidasColgado(anchoCm: number, altoCm: number, conMarco: boolean, diptico: boolean) {
-  const m = conMarco ? 2 * MOLDURA : 0;
+export function medidasColgado(anchoCm: number, altoCm: number, conMarco: boolean, diptico: boolean, moldura = MOLDURA) {
+  const m = conMarco ? 2 * moldura : 0;
   return {
     ancho: diptico ? 2 * (anchoCm + m) + SEPARACION_DIPTICO : anchoCm + m,
     alto: altoCm + m,

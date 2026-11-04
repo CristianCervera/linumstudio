@@ -9,8 +9,13 @@ export type Lang = keyof typeof idiomas;
 export const defaultLang: Lang = 'es';
 export const langs = Object.keys(idiomas) as Lang[];
 
-/** Ruta de la página en cada idioma: el español vive en la raíz. */
-export const rutaDe = (lang: Lang) => (lang === defaultLang ? '/' : `/${lang}/`);
+/** Páginas de la web: la principal y una por producto. Las rutas no se traducen. */
+export const paginas = ['inicio', 'linum', 'cuadritos'] as const;
+export type Pagina = (typeof paginas)[number];
+
+/** Ruta de una página en cada idioma: el español vive en la raíz. */
+export const rutaDe = (lang: Lang, pagina: Pagina = 'inicio') =>
+  `${lang === defaultLang ? '' : `/${lang}`}/${pagina === 'inicio' ? '' : `${pagina}/`}`;
 
 export const euros = (lang: Lang, n: number) =>
   new Intl.NumberFormat(idiomas[lang].intl, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Math.round(n));
@@ -19,9 +24,9 @@ type Trabajo = { alt: string; pie: string };
 
 const es = {
   meta: {
-    title: 'Linum Estudio · Tapices enmarcados y personalizados en Valencia',
+    title: 'Linum Estudio · Tapices y cuadritos enmarcados en Valencia',
     description:
-      'Tapices de tela enmarcados en madera y hechos a medida en Valencia. Más de 20 telas de ikat y florales: elige tela, medida y marco y pruébalo en tu pared.',
+      'Tapices Linum hechos a medida y cuadritos de lámina sobre tela, enmarcados en madera en Valencia. Elige tela, medida y marco y pruébalo en tu pared.',
     imagenAlt: 'Tres tapices de Linum Estudio enmarcados en madera: en un salón, en una pared verde y en un patio',
   },
   a11y: {
@@ -34,16 +39,16 @@ const es = {
     descargarPdf: 'Descargar catálogo (PDF)',
     filtrar: 'Filtrar telas',
   },
-  nav: { trabajos: 'Trabajos', telas: 'Telas', precios: 'Precios', visita: 'Visítanos', catalogo: 'Catálogo' },
+  nav: { linum: 'Tapices Linum', cuadritos: 'Cuadritos', visita: 'Visítanos', catalogo: 'Catálogo' },
   hero: {
     eyebrow: 'Hecho a mano en Valencia',
-    titulo: 'Tapices enmarcados y',
-    tituloEm: 'personalizados',
-    lede: 'Elegimos contigo la tela, la medida y el marco, y la convertimos en una pieza para tu pared. Ikats, florales y chinoiserie montados a mano sobre bastidor.',
+    titulo: 'Telas enmarcadas para',
+    tituloEm: 'tu pared',
+    lede: 'Tapices Linum hechos a medida y cuadritos con una lámina sobre tela. Elegimos contigo la tela, la medida y el marco, y lo montamos a mano en Valencia.',
     descargar: 'Descargar catálogo',
-    disenar: 'Diseñar mi tapiz',
-    telas: 'telas en catálogo',
-    maderas: 'maderas de marco',
+    ver: 'Ver tapices y cuadritos',
+    telas: 'telas de tapiz',
+    disenos: 'diseños de cuadrito',
     desde: 'Desde',
   },
   trabajos: {
@@ -65,6 +70,10 @@ const es = {
       'valencia-bano': { alt: 'Tapiz de granadas en un baño de tonos arena', pie: 'Valencia en un baño' },
       'tulum-comedor': { alt: 'Dos tapices de ikat gris en un comedor con lámpara de mimbre', pie: 'Díptico Tulum en un comedor' },
       'katmandu-patio': { alt: 'Tapiz de ikat verde en la pared encalada de un patio', pie: 'Katmandú en un patio' },
+      'cuadritos-aparador': { alt: 'Cuatro cuadritos con láminas religiosas sobre telas estampadas, apoyados en un aparador de madera', pie: 'Cuadritos sobre un aparador' },
+      'cuadrito-nacimiento': { alt: 'Cuadrito del Sagrado Corazón impreso en tela sobre rayas teja, entre dos figuras de un belén', pie: 'Sagrado Corazón impreso en tela' },
+      'cuadrito-madre': { alt: 'Cuadrito de una mujer embarazada sobre tela de flores verdes, encima de una cómoda con cestas', pie: 'Madre sobre flores verdes' },
+      'cuadrito-desamparados': { alt: 'Cuadrito de la Virgen de los Desamparados sobre tela de hojas malva, en un taburete junto a una vela', pie: 'Virgen de los Desamparados' },
     } as Record<string, Trabajo>,
   },
   config: {
@@ -107,6 +116,23 @@ const es = {
       cambiar: 'Cambiar foto',
       reajustar: 'Ajustar escala',
     },
+    cuadrito: {
+      nombre: 'Cuadrito',
+      eyebrow: 'Tu cuadrito, en tres pasos',
+      titulo: 'Elige tela, diseño e impresión',
+      lede: 'Pruébalo aquí: verás cómo queda y cuánto cuesta, y nos lo pides por WhatsApp con un toque.',
+      tela: 'Tela de fondo',
+      diseno: 'Diseño',
+      impresion: 'Impresión',
+      impresionNota: '27 × 20 cm, con marco de madera natural',
+      impresiones: { papel: 'Papel verjurado', tela: 'Tela' },
+      telas: { 'flores-verdes': 'Flores verdes', 'rayas-teja': 'Rayas teja', 'hojas-malva': 'Hojas malva', 'ramitas-mostaza': 'Ramitas mostaza', granadas: 'Granadas', 'rayas-azules': 'Rayas azules' } as Record<string, string>,
+      disenos: { 'sagrado-corazon': 'Sagrado Corazón', desamparados: 'Virgen de los Desamparados', madre: 'Madre', pilar: 'Virgen del Pilar' } as Record<string, string>,
+      presupuesto: 'Para otras telas, tamaños y diseños te hacemos un presupuesto personalizado.',
+      pedir: 'Pedir este cuadrito',
+      mensaje: (o: { diseno: string; tela: string; impresion: string }) =>
+        `Hola, Linum. Me interesa un cuadrito de ${o.diseno} sobre la tela ${o.tela}, impreso en ${o.impresion.toLowerCase()}. ¿Me podéis dar más información?`,
+    },
     pedir: 'Pedir este tapiz',
     compartir: 'Compartir imagen',
     nota: 'Precio de referencia del catálogo 2026. Te confirmamos el presupuesto antes de empezar.',
@@ -120,12 +146,13 @@ const es = {
     lede: 'Tapiz sin marco. Si no ves tu medida, la hacemos a medida y te pasamos presupuesto.',
     enmarcado: 'Enmarcado en madera natural, blanca o negra',
     diptico: 'Díptico: el segundo tapiz',
+    ledeCuadritos: 'Cuadrito de 27 × 20 cm con marco de madera natural incluido. El precio depende de cómo se imprime el diseño.',
   },
   catalogo: {
     eyebrow: 'Catálogo 2026',
     titulo: 'Todas las telas, en un PDF',
     lede: (paginas: number) =>
-      `${paginas} páginas con las telas, las medidas, los marcos y los precios. Guárdalo para decidir con calma o compártelo con quien decide contigo.`,
+      `${paginas} páginas con los tapices y los cuadritos: telas, medidas, marcos y precios. Guárdalo para decidir con calma o compártelo con quien decide contigo.`,
     descargar: 'Descargar catálogo',
     idiomaPdf: '',
   },
@@ -138,16 +165,59 @@ const es = {
     telefono: 'Teléfono y WhatsApp',
     instagram: 'Instagram',
   },
-  footer: 'Tapices enmarcados y personalizados · Valencia',
+  productos: {
+    eyebrow: 'Lo que hacemos',
+    titulo: 'Elige tu pieza',
+    desde: 'Desde',
+    tapiz: {
+      nombre: 'Tapices Linum',
+      texto: 'Ikats, florales y chinoiserie montados sobre bastidor, de 60 × 40 a 100 × 70 cm, con o sin marco de madera. También a medida.',
+      ver: 'Ver tapices y diseñar el tuyo',
+    },
+    cuadrito: {
+      nombre: 'Cuadritos',
+      texto: 'Una lámina impresa en papel verjurado o en tela, sobre una tela estampada y en un marco de madera natural de 27 × 20 cm.',
+      ver: 'Ver cuadritos y diseñar el tuyo',
+    },
+  },
+  paginas: {
+    linum: {
+      title: 'Tapices Linum enmarcados y a medida · Linum Estudio',
+      description: 'Tapices de tela enmarcados en madera y hechos a medida en Valencia. Más de 20 telas de ikat y florales: elige tela, medida y marco y pruébalo en tu pared.',
+      eyebrow: 'Tapices Linum',
+      titulo: 'Tapices enmarcados y',
+      tituloEm: 'personalizados',
+      lede: 'Elegimos contigo la tela, la medida y el marco, y la convertimos en una pieza para tu pared. Ikats, florales y chinoiserie montados a mano sobre bastidor.',
+      disenar: 'Diseñar mi tapiz',
+      telas: 'telas en catálogo',
+      maderas: 'maderas de marco',
+    },
+    cuadritos: {
+      title: 'Cuadritos de lámina sobre tela · Linum Estudio',
+      description: 'Cuadritos de 27 × 20 cm hechos a mano en Valencia: Sagrado Corazón, Virgen de los Desamparados, Virgen del Pilar y Madre sobre telas estampadas, con marco de madera natural.',
+      eyebrow: 'Cuadritos',
+      titulo: 'Láminas sobre tela,',
+      tituloEm: 'en pequeño',
+      lede: 'Un diseño impreso en papel verjurado o en tela, sobre una tela estampada y en un marco de madera natural de 27 × 20 cm. Para regalar o para un rincón especial.',
+      disenar: 'Diseñar mi cuadrito',
+      telas: 'telas de fondo',
+      disenos: 'diseños',
+    },
+  },
+  otro: {
+    tapiz: { texto: (desde: string) => `¿Buscas algo más pequeño? Los cuadritos llevan una lámina sobre tela, desde ${desde}.`, ver: 'Ver cuadritos' },
+    cuadrito: { texto: (desde: string) => `¿Quieres una pieza más grande? Los tapices Linum van de 60 × 40 a 100 × 70 cm, desde ${desde}.`, ver: 'Ver tapices Linum' },
+  },
+  footer: 'Tapices y cuadritos enmarcados · Valencia',
 };
 
 export type Diccionario = typeof es;
 
 const en: Diccionario = {
   meta: {
-    title: 'Linum Estudio · Framed fabric wall hangings in Valencia',
+    title: 'Linum Estudio · Framed fabric wall hangings and small frames in Valencia',
     description:
-      'Wood-framed fabric wall hangings, made to measure in Valencia, Spain. Over 20 ikat and floral fabrics: pick fabric, size and frame and try it on your wall.',
+      'Made-to-measure Linum wall hangings and small frames with a print on fabric, framed in wood in Valencia, Spain. Pick fabric, size and frame and try it on your wall.',
     imagenAlt: 'Three Linum Estudio wood-framed fabric pieces: in a living room, on a green wall and in a patio',
   },
   a11y: {
@@ -160,16 +230,16 @@ const en: Diccionario = {
     descargarPdf: 'Download catalogue (PDF)',
     filtrar: 'Filter fabrics',
   },
-  nav: { trabajos: 'Work', telas: 'Fabrics', precios: 'Prices', visita: 'Visit us', catalogo: 'Catalogue' },
+  nav: { linum: 'Linum hangings', cuadritos: 'Small frames', visita: 'Visit us', catalogo: 'Catalogue' },
   hero: {
     eyebrow: 'Handmade in Valencia',
-    titulo: 'Framed wall hangings,',
-    tituloEm: 'made for you',
-    lede: 'We choose the fabric, size and frame with you, and turn it into a piece for your wall. Ikats, florals and chinoiserie, stretched by hand.',
+    titulo: 'Framed fabrics for',
+    tituloEm: 'your wall',
+    lede: 'Made-to-measure Linum wall hangings and small frames with a print on fabric. We choose the fabric, size and frame with you and put it together by hand in Valencia.',
     descargar: 'Download catalogue',
-    disenar: 'Design my piece',
-    telas: 'fabrics in the catalogue',
-    maderas: 'frame finishes',
+    ver: 'See hangings and small frames',
+    telas: 'hanging fabrics',
+    disenos: 'small-frame designs',
     desde: 'From',
   },
   trabajos: {
@@ -191,6 +261,10 @@ const en: Diccionario = {
       'valencia-bano': { alt: 'Pomegranate print in a sand-coloured bathroom', pie: 'Valencia in a bathroom' },
       'tulum-comedor': { alt: 'Two grey ikat pieces in a dining room with a wicker lamp', pie: 'Tulum diptych in a dining room' },
       'katmandu-patio': { alt: 'Green ikat piece on the whitewashed wall of a patio', pie: 'Katmandú in a patio' },
+      'cuadritos-aparador': { alt: 'Four small frames with religious prints on patterned fabrics, leaning on a wooden sideboard', pie: 'Small frames on a sideboard' },
+      'cuadrito-nacimiento': { alt: 'Small frame with the Sacred Heart printed on fabric over terracotta stripes, between two nativity figures', pie: 'Sacred Heart printed on fabric' },
+      'cuadrito-madre': { alt: 'Small frame with a pregnant woman on green floral fabric, on top of a chest with baskets', pie: 'Mother on green flowers' },
+      'cuadrito-desamparados': { alt: 'Small frame with Our Lady of the Forsaken on mauve leaf fabric, on a stool next to a candle', pie: 'Our Lady of the Forsaken' },
     },
   },
   config: {
@@ -233,6 +307,23 @@ const en: Diccionario = {
       cambiar: 'Change photo',
       reajustar: 'Adjust scale',
     },
+    cuadrito: {
+      nombre: 'Small frame',
+      eyebrow: 'Your small frame, in three steps',
+      titulo: 'Choose fabric, design and print',
+      lede: 'Try it here: see how it looks and what it costs, then send it to us on WhatsApp with one tap.',
+      tela: 'Background fabric',
+      diseno: 'Design',
+      impresion: 'Print',
+      impresionNota: '27 × 20 cm, natural wood frame included',
+      impresiones: { papel: 'Laid paper', tela: 'Fabric' },
+      telas: { 'flores-verdes': 'Green flowers', 'rayas-teja': 'Terracotta stripes', 'hojas-malva': 'Mauve leaves', 'ramitas-mostaza': 'Mustard sprigs', granadas: 'Pomegranates', 'rayas-azules': 'Blue stripes' },
+      disenos: { 'sagrado-corazon': 'Sacred Heart', desamparados: 'Our Lady of the Forsaken', madre: 'Mother', pilar: 'Our Lady of the Pillar' },
+      presupuesto: 'For other fabrics, sizes and designs we’ll send you a custom quote.',
+      pedir: 'Order this frame',
+      mensaje: (o) =>
+        `Hello, Linum. I’m interested in a small frame with the ${o.diseno} design on the ${o.tela} fabric, printed on ${o.impresion.toLowerCase()}. Could you send me more information?`,
+    },
     pedir: 'Order this piece',
     compartir: 'Share image',
     nota: 'Reference price from the 2026 catalogue. We confirm the quote before we start.',
@@ -246,12 +337,13 @@ const en: Diccionario = {
     lede: 'Unframed piece. If your size isn’t listed, we make it to measure and send you a quote.',
     enmarcado: 'Natural, white or black wood frame',
     diptico: 'Diptych: the second piece',
+    ledeCuadritos: '27 × 20 cm small frame, natural wood frame included. The price depends on how the design is printed.',
   },
   catalogo: {
     eyebrow: '2026 catalogue',
     titulo: 'Every fabric, in one PDF',
     lede: (paginas) =>
-      `${paginas} pages with the fabrics, sizes, frames and prices. Keep it to decide at your own pace, or share it with whoever is deciding with you.`,
+      `${paginas} pages covering our fabric pieces and small frames: fabrics, sizes, frames and prices. Keep it to decide at your own pace, or share it with whoever is deciding with you.`,
     descargar: 'Download catalogue',
     idiomaPdf: 'In Spanish',
   },
@@ -264,14 +356,57 @@ const en: Diccionario = {
     telefono: 'Phone and WhatsApp',
     instagram: 'Instagram',
   },
-  footer: 'Framed and custom wall hangings · Valencia',
+  productos: {
+    eyebrow: 'What we make',
+    titulo: 'Choose your piece',
+    desde: 'From',
+    tapiz: {
+      nombre: 'Linum wall hangings',
+      texto: 'Ikats, florals and chinoiserie stretched over a frame, from 60 × 40 to 100 × 70 cm, with or without a wooden frame. Also made to measure.',
+      ver: 'See hangings and design yours',
+    },
+    cuadrito: {
+      nombre: 'Small frames',
+      texto: 'A design printed on laid paper or fabric, over a patterned fabric, in a 27 × 20 cm natural wood frame.',
+      ver: 'See small frames and design yours',
+    },
+  },
+  paginas: {
+    linum: {
+      title: 'Linum wall hangings, framed and made to measure · Linum Estudio',
+      description: 'Wood-framed fabric wall hangings, made to measure in Valencia, Spain. Over 20 ikat and floral fabrics: pick fabric, size and frame and try it on your wall.',
+      eyebrow: 'Linum wall hangings',
+      titulo: 'Framed wall hangings,',
+      tituloEm: 'made for you',
+      lede: 'We choose the fabric, size and frame with you, and turn it into a piece for your wall. Ikats, florals and chinoiserie, stretched by hand.',
+      disenar: 'Design my piece',
+      telas: 'fabrics in the catalogue',
+      maderas: 'frame finishes',
+    },
+    cuadritos: {
+      title: 'Small frames: prints on fabric · Linum Estudio',
+      description: 'Handmade 27 × 20 cm small frames from Valencia: Sacred Heart, Our Lady of the Forsaken, Our Lady of the Pillar and Mother over patterned fabrics, in a natural wood frame.',
+      eyebrow: 'Small frames',
+      titulo: 'Prints on fabric,',
+      tituloEm: 'in miniature',
+      lede: 'A design printed on laid paper or fabric, over a patterned fabric and in a 27 × 20 cm natural wood frame. A gift, or something for a special corner.',
+      disenar: 'Design my small frame',
+      telas: 'background fabrics',
+      disenos: 'designs',
+    },
+  },
+  otro: {
+    tapiz: { texto: (desde) => `Looking for something smaller? Small frames pair a print with a fabric, from ${desde}.`, ver: 'See small frames' },
+    cuadrito: { texto: (desde) => `Want a bigger piece? Linum hangings go from 60 × 40 to 100 × 70 cm, from ${desde}.`, ver: 'See Linum hangings' },
+  },
+  footer: 'Framed wall hangings and small frames · Valencia',
 };
 
 const de: Diccionario = {
   meta: {
-    title: 'Linum Estudio · Gerahmte Stoffbilder nach Maß aus Valencia',
+    title: 'Linum Estudio · Gerahmte Stoffbilder und kleine Bilder aus Valencia',
     description:
-      'In Holz gerahmte Stoffbilder nach Maß aus Valencia. Über 20 Ikat- und Blumenstoffe: Stoff, Größe und Rahmen wählen und an der eigenen Wand ansehen.',
+      'Linum-Stoffbilder nach Maß und kleine Bilder mit Druck auf Stoff, in Holz gerahmt in Valencia. Stoff, Größe und Rahmen wählen und an der eigenen Wand ansehen.',
     imagenAlt: 'Drei in Holz gerahmte Stoffbilder von Linum Estudio: im Wohnzimmer, an einer grünen Wand und im Innenhof',
   },
   a11y: {
@@ -284,16 +419,16 @@ const de: Diccionario = {
     descargarPdf: 'Katalog herunterladen (PDF)',
     filtrar: 'Stoffe filtern',
   },
-  nav: { trabajos: 'Arbeiten', telas: 'Stoffe', precios: 'Preise', visita: 'Besuch', catalogo: 'Katalog' },
+  nav: { linum: 'Linum-Stoffbilder', cuadritos: 'Kleine Bilder', visita: 'Besuch', catalogo: 'Katalog' },
   hero: {
     eyebrow: 'Handgefertigt in Valencia',
-    titulo: 'Gerahmte Stoffbilder,',
-    tituloEm: 'ganz nach Ihrem Wunsch',
-    lede: 'Gemeinsam mit Ihnen wählen wir Stoff, Größe und Rahmen und machen daraus ein Stück für Ihre Wand. Ikat, Blumenmuster und Chinoiserie, von Hand auf Keilrahmen gespannt.',
+    titulo: 'Gerahmte Stoffe für',
+    tituloEm: 'Ihre Wand',
+    lede: 'Linum-Stoffbilder nach Maß und kleine Bilder mit Druck auf Stoff. Gemeinsam mit Ihnen wählen wir Stoff, Größe und Rahmen und fertigen alles von Hand in Valencia.',
     descargar: 'Katalog herunterladen',
-    disenar: 'Mein Stoffbild gestalten',
-    telas: 'Stoffe im Katalog',
-    maderas: 'Rahmenhölzer',
+    ver: 'Stoffbilder und kleine Bilder ansehen',
+    telas: 'Stoffe für Stoffbilder',
+    disenos: 'Motive für kleine Bilder',
     desde: 'Ab',
   },
   trabajos: {
@@ -315,6 +450,10 @@ const de: Diccionario = {
       'valencia-bano': { alt: 'Stoffbild mit Granatäpfeln in einem sandfarbenen Bad', pie: 'Valencia im Bad' },
       'tulum-comedor': { alt: 'Zwei graue Ikat-Stoffbilder in einem Esszimmer mit Korblampe', pie: 'Diptychon Tulum im Esszimmer' },
       'katmandu-patio': { alt: 'Grünes Ikat-Stoffbild an der gekalkten Wand eines Innenhofs', pie: 'Katmandú im Innenhof' },
+      'cuadritos-aparador': { alt: 'Vier kleine Bilder mit religiösen Motiven auf gemusterten Stoffen, an eine Holzanrichte gelehnt', pie: 'Kleine Bilder auf einer Anrichte' },
+      'cuadrito-nacimiento': { alt: 'Kleines Bild mit dem Heiligsten Herzen auf Stoff gedruckt, auf terrakottafarbenen Streifen, zwischen zwei Krippenfiguren', pie: 'Heiligstes Herz, auf Stoff gedruckt' },
+      'cuadrito-madre': { alt: 'Kleines Bild einer Schwangeren auf grünem Blumenstoff, auf einer Kommode mit Körben', pie: 'Mutter auf grünen Blumen' },
+      'cuadrito-desamparados': { alt: 'Kleines Bild der Jungfrau der Verlassenen auf malvenfarbenem Blätterstoff, auf einem Hocker neben einer Kerze', pie: 'Jungfrau der Verlassenen' },
     },
   },
   config: {
@@ -357,6 +496,23 @@ const de: Diccionario = {
       cambiar: 'Foto ändern',
       reajustar: 'Maßstab anpassen',
     },
+    cuadrito: {
+      nombre: 'Kleines Bild',
+      eyebrow: 'Ihr kleines Bild in drei Schritten',
+      titulo: 'Stoff, Motiv und Druck wählen',
+      lede: 'Probieren Sie es hier aus: Sie sehen, wie es aussieht und was es kostet, und senden uns die Anfrage mit einem Tipp per WhatsApp.',
+      tela: 'Hintergrundstoff',
+      diseno: 'Motiv',
+      impresion: 'Druck',
+      impresionNota: '27 × 20 cm, mit Naturholzrahmen',
+      impresiones: { papel: 'Büttenpapier', tela: 'Stoff' },
+      telas: { 'flores-verdes': 'Grüne Blumen', 'rayas-teja': 'Terrakotta-Streifen', 'hojas-malva': 'Malvenblätter', 'ramitas-mostaza': 'Senfranken', granadas: 'Granatäpfel', 'rayas-azules': 'Blaue Streifen' },
+      disenos: { 'sagrado-corazon': 'Heiligstes Herz', desamparados: 'Jungfrau der Verlassenen', madre: 'Mutter', pilar: 'Jungfrau vom Pfeiler' },
+      presupuesto: 'Für andere Stoffe, Größen und Motive machen wir dir ein individuelles Angebot.',
+      pedir: 'Dieses Bild anfragen',
+      mensaje: (o) =>
+        `Hallo Linum, ich interessiere mich für ein kleines Bild mit dem Motiv ${o.diseno} auf dem Stoff ${o.tela}, gedruckt auf ${o.impresion}. Könnt ihr mir mehr Informationen schicken?`,
+    },
     pedir: 'Dieses Stoffbild anfragen',
     compartir: 'Bild teilen',
     nota: 'Richtpreis laut Katalog 2026. Wir bestätigen das Angebot, bevor wir beginnen.',
@@ -370,12 +526,13 @@ const de: Diccionario = {
     lede: 'Stoffbild ohne Rahmen. Ist Ihre Größe nicht dabei, fertigen wir nach Maß und schicken Ihnen ein Angebot.',
     enmarcado: 'Rahmen aus Naturholz, weißem oder schwarzem Holz',
     diptico: 'Diptychon: das zweite Stoffbild',
+    ledeCuadritos: 'Kleines Bild 27 × 20 cm, Naturholzrahmen inklusive. Der Preis hängt davon ab, wie das Motiv gedruckt wird.',
   },
   catalogo: {
     eyebrow: 'Katalog 2026',
     titulo: 'Alle Stoffe in einem PDF',
     lede: (paginas) =>
-      `${paginas} Seiten mit Stoffen, Größen, Rahmen und Preisen. Speichern Sie ihn, um in Ruhe zu entscheiden, oder teilen Sie ihn mit allen, die mitentscheiden.`,
+      `${paginas} Seiten über Stoffbilder und kleine Bilder: Stoffe, Größen, Rahmen und Preise. Speichern Sie ihn, um in Ruhe zu entscheiden, oder teilen Sie ihn mit allen, die mitentscheiden.`,
     descargar: 'Katalog herunterladen',
     idiomaPdf: 'Auf Spanisch',
   },
@@ -388,14 +545,57 @@ const de: Diccionario = {
     telefono: 'Telefon und WhatsApp',
     instagram: 'Instagram',
   },
-  footer: 'Gerahmte Stoffbilder nach Maß · Valencia',
+  productos: {
+    eyebrow: 'Was wir machen',
+    titulo: 'Wählen Sie Ihr Stück',
+    desde: 'Ab',
+    tapiz: {
+      nombre: 'Linum-Stoffbilder',
+      texto: 'Ikat, Blumenmuster und Chinoiserie auf Keilrahmen, von 60 × 40 bis 100 × 70 cm, mit oder ohne Holzrahmen. Auch nach Maß.',
+      ver: 'Stoffbilder ansehen und gestalten',
+    },
+    cuadrito: {
+      nombre: 'Kleine Bilder',
+      texto: 'Ein Motiv, auf Büttenpapier oder Stoff gedruckt, auf gemustertem Stoff und im Naturholzrahmen von 27 × 20 cm.',
+      ver: 'Kleine Bilder ansehen und gestalten',
+    },
+  },
+  paginas: {
+    linum: {
+      title: 'Linum-Stoffbilder, gerahmt und nach Maß · Linum Estudio',
+      description: 'In Holz gerahmte Stoffbilder nach Maß aus Valencia. Über 20 Ikat- und Blumenstoffe: Stoff, Größe und Rahmen wählen und an der eigenen Wand ansehen.',
+      eyebrow: 'Linum-Stoffbilder',
+      titulo: 'Gerahmte Stoffbilder,',
+      tituloEm: 'ganz nach Ihrem Wunsch',
+      lede: 'Gemeinsam mit Ihnen wählen wir Stoff, Größe und Rahmen und machen daraus ein Stück für Ihre Wand. Ikat, Blumenmuster und Chinoiserie, von Hand auf Keilrahmen gespannt.',
+      disenar: 'Mein Stoffbild gestalten',
+      telas: 'Stoffe im Katalog',
+      maderas: 'Rahmenhölzer',
+    },
+    cuadritos: {
+      title: 'Kleine Bilder: Druck auf Stoff · Linum Estudio',
+      description: 'Handgefertigte kleine Bilder von 27 × 20 cm aus Valencia: Heiligstes Herz, Jungfrau der Verlassenen, Jungfrau vom Pfeiler und Mutter auf gemusterten Stoffen, im Naturholzrahmen.',
+      eyebrow: 'Kleine Bilder',
+      titulo: 'Druck auf Stoff,',
+      tituloEm: 'im Kleinformat',
+      lede: 'Ein Motiv, auf Büttenpapier oder Stoff gedruckt, auf gemustertem Stoff und im Naturholzrahmen von 27 × 20 cm. Zum Verschenken oder für eine besondere Ecke.',
+      disenar: 'Mein kleines Bild gestalten',
+      telas: 'Hintergrundstoffe',
+      disenos: 'Motive',
+    },
+  },
+  otro: {
+    tapiz: { texto: (desde) => `Etwas Kleineres gesucht? Die kleinen Bilder verbinden einen Druck mit einem Stoff, ab ${desde}.`, ver: 'Kleine Bilder ansehen' },
+    cuadrito: { texto: (desde) => `Lieber ein größeres Stück? Linum-Stoffbilder gibt es von 60 × 40 bis 100 × 70 cm, ab ${desde}.`, ver: 'Linum-Stoffbilder ansehen' },
+  },
+  footer: 'Gerahmte Stoffbilder und kleine Bilder · Valencia',
 };
 
 const fr: Diccionario = {
   meta: {
-    title: 'Linum Estudio · Tableaux en tissu encadrés sur mesure, Valence',
+    title: 'Linum Estudio · Tableaux en tissu et petits cadres encadrés, Valence',
     description:
-      'Tableaux en tissu encadrés de bois, faits sur mesure à Valence. Plus de 20 tissus ikat et fleuris : choisissez tissu, taille et cadre, et essayez-le chez vous.',
+      'Tableaux en tissu Linum sur mesure et petits cadres avec une image sur tissu, encadrés de bois à Valence. Choisissez tissu, taille et cadre, et essayez-le chez vous.',
     imagenAlt: 'Trois tableaux en tissu Linum Estudio encadrés de bois : dans un salon, sur un mur vert et dans un patio',
   },
   a11y: {
@@ -408,16 +608,16 @@ const fr: Diccionario = {
     descargarPdf: 'Télécharger le catalogue (PDF)',
     filtrar: 'Filtrer les tissus',
   },
-  nav: { trabajos: 'Réalisations', telas: 'Tissus', precios: 'Tarifs', visita: 'Nous voir', catalogo: 'Catalogue' },
+  nav: { linum: 'Tableaux Linum', cuadritos: 'Petits cadres', visita: 'Nous voir', catalogo: 'Catalogue' },
   hero: {
     eyebrow: 'Fait main à Valence',
-    titulo: 'Tableaux en tissu encadrés et',
-    tituloEm: 'personnalisés',
-    lede: 'Nous choisissons avec vous le tissu, la taille et le cadre, pour en faire une pièce pour votre mur. Ikats, motifs fleuris et chinoiseries, tendus à la main sur châssis.',
+    titulo: 'Des tissus encadrés pour',
+    tituloEm: 'votre mur',
+    lede: 'Tableaux en tissu Linum sur mesure et petits cadres avec une image sur tissu. Nous choisissons avec vous le tissu, la taille et le cadre, et nous les montons à la main à Valence.',
     descargar: 'Télécharger le catalogue',
-    disenar: 'Créer mon tableau',
-    telas: 'tissus au catalogue',
-    maderas: 'finitions de cadre',
+    ver: 'Voir tableaux et petits cadres',
+    telas: 'tissus pour tableaux',
+    disenos: 'motifs de petit cadre',
     desde: 'À partir de',
   },
   trabajos: {
@@ -439,6 +639,10 @@ const fr: Diccionario = {
       'valencia-bano': { alt: 'Tableau à motif de grenades dans une salle de bains couleur sable', pie: 'Valencia dans une salle de bains' },
       'tulum-comedor': { alt: 'Deux tableaux ikat gris dans une salle à manger avec une suspension en osier', pie: 'Diptyque Tulum dans une salle à manger' },
       'katmandu-patio': { alt: 'Tableau ikat vert sur le mur blanchi à la chaux d’un patio', pie: 'Katmandú dans un patio' },
+      'cuadritos-aparador': { alt: 'Quatre petits cadres avec des images religieuses sur tissus imprimés, posés sur un buffet en bois', pie: 'Petits cadres sur un buffet' },
+      'cuadrito-nacimiento': { alt: 'Petit cadre du Sacré-Cœur imprimé sur tissu, sur rayures terracotta, entre deux santons de crèche', pie: 'Sacré-Cœur imprimé sur tissu' },
+      'cuadrito-madre': { alt: 'Petit cadre d’une femme enceinte sur tissu à fleurs vertes, sur une commode à paniers', pie: 'Mère sur fleurs vertes' },
+      'cuadrito-desamparados': { alt: 'Petit cadre de Notre-Dame des Abandonnés sur tissu à feuilles mauves, sur un tabouret près d’une bougie', pie: 'Notre-Dame des Abandonnés' },
     },
   },
   config: {
@@ -481,6 +685,23 @@ const fr: Diccionario = {
       cambiar: 'Changer de photo',
       reajustar: 'Ajuster l’échelle',
     },
+    cuadrito: {
+      nombre: 'Petit cadre',
+      eyebrow: 'Votre petit cadre, en trois étapes',
+      titulo: 'Choisissez tissu, motif et impression',
+      lede: 'Essayez ici : vous verrez le rendu et le prix, puis vous nous l’envoyez sur WhatsApp en un geste.',
+      tela: 'Tissu de fond',
+      diseno: 'Motif',
+      impresion: 'Impression',
+      impresionNota: '27 × 20 cm, cadre en bois naturel inclus',
+      impresiones: { papel: 'Papier vergé', tela: 'Tissu' },
+      telas: { 'flores-verdes': 'Fleurs vertes', 'rayas-teja': 'Rayures terracotta', 'hojas-malva': 'Feuilles mauves', 'ramitas-mostaza': 'Brins moutarde', granadas: 'Grenades', 'rayas-azules': 'Rayures bleues' },
+      disenos: { 'sagrado-corazon': 'Sacré-Cœur', desamparados: 'Notre-Dame des Abandonnés', madre: 'Mère', pilar: 'Notre-Dame du Pilier' },
+      presupuesto: 'Pour d’autres tissus, tailles et motifs, nous vous faisons un devis personnalisé.',
+      pedir: 'Commander ce cadre',
+      mensaje: (o) =>
+        `Bonjour Linum, je suis intéressé(e) par un petit cadre avec le motif ${o.diseno} sur le tissu ${o.tela}, imprimé sur ${o.impresion.toLowerCase()}. Pouvez-vous m’envoyer plus d’informations ?`,
+    },
     pedir: 'Commander ce tableau',
     compartir: 'Partager l’image',
     nota: 'Prix de référence du catalogue 2026. Nous confirmons le devis avant de commencer.',
@@ -494,12 +715,13 @@ const fr: Diccionario = {
     lede: 'Tableau sans cadre. Si votre taille n’y figure pas, nous la réalisons sur mesure et vous envoyons un devis.',
     enmarcado: 'Cadre en bois naturel, blanc ou noir',
     diptico: 'Diptyque : le second tableau',
+    ledeCuadritos: 'Petit cadre de 27 × 20 cm, cadre en bois naturel inclus. Le prix dépend de la façon dont le motif est imprimé.',
   },
   catalogo: {
     eyebrow: 'Catalogue 2026',
     titulo: 'Tous les tissus dans un PDF',
     lede: (paginas) =>
-      `${paginas} pages avec les tissus, les tailles, les cadres et les tarifs. Gardez-le pour décider tranquillement, ou partagez-le avec ceux qui décident avec vous.`,
+      `${paginas} pages sur les tableaux et les petits cadres : tissus, tailles, cadres et tarifs. Gardez-le pour décider tranquillement, ou partagez-le avec ceux qui décident avec vous.`,
     descargar: 'Télécharger le catalogue',
     idiomaPdf: 'En espagnol',
   },
@@ -512,7 +734,50 @@ const fr: Diccionario = {
     telefono: 'Téléphone et WhatsApp',
     instagram: 'Instagram',
   },
-  footer: 'Tableaux en tissu encadrés et personnalisés · Valence',
+  productos: {
+    eyebrow: 'Ce que nous faisons',
+    titulo: 'Choisissez votre pièce',
+    desde: 'À partir de',
+    tapiz: {
+      nombre: 'Tableaux Linum',
+      texto: 'Ikats, motifs fleuris et chinoiseries tendus sur châssis, de 60 × 40 à 100 × 70 cm, avec ou sans cadre en bois. Aussi sur mesure.',
+      ver: 'Voir les tableaux et créer le vôtre',
+    },
+    cuadrito: {
+      nombre: 'Petits cadres',
+      texto: 'Un motif imprimé sur papier vergé ou sur tissu, posé sur un tissu imprimé, dans un cadre en bois naturel de 27 × 20 cm.',
+      ver: 'Voir les petits cadres et créer le vôtre',
+    },
+  },
+  paginas: {
+    linum: {
+      title: 'Tableaux en tissu Linum, encadrés et sur mesure · Linum Estudio',
+      description: 'Tableaux en tissu encadrés de bois, faits sur mesure à Valence. Plus de 20 tissus ikat et fleuris : choisissez tissu, taille et cadre, et essayez-le chez vous.',
+      eyebrow: 'Tableaux Linum',
+      titulo: 'Tableaux en tissu encadrés et',
+      tituloEm: 'personnalisés',
+      lede: 'Nous choisissons avec vous le tissu, la taille et le cadre, pour en faire une pièce pour votre mur. Ikats, motifs fleuris et chinoiseries, tendus à la main sur châssis.',
+      disenar: 'Créer mon tableau',
+      telas: 'tissus au catalogue',
+      maderas: 'finitions de cadre',
+    },
+    cuadritos: {
+      title: 'Petits cadres : image sur tissu · Linum Estudio',
+      description: 'Petits cadres de 27 × 20 cm faits main à Valence : Sacré-Cœur, Notre-Dame des Abandonnés, Notre-Dame du Pilier et Mère sur tissus imprimés, dans un cadre en bois naturel.',
+      eyebrow: 'Petits cadres',
+      titulo: 'Une image sur tissu,',
+      tituloEm: 'en petit format',
+      lede: 'Un motif imprimé sur papier vergé ou sur tissu, posé sur un tissu imprimé et dans un cadre en bois naturel de 27 × 20 cm. À offrir, ou pour un coin à part.',
+      disenar: 'Créer mon petit cadre',
+      telas: 'tissus de fond',
+      disenos: 'motifs',
+    },
+  },
+  otro: {
+    tapiz: { texto: (desde) => `Vous cherchez plus petit ? Les petits cadres associent une image et un tissu, à partir de ${desde}.`, ver: 'Voir les petits cadres' },
+    cuadrito: { texto: (desde) => `Envie d’une pièce plus grande ? Les tableaux Linum vont de 60 × 40 à 100 × 70 cm, à partir de ${desde}.`, ver: 'Voir les tableaux Linum' },
+  },
+  footer: 'Tableaux en tissu et petits cadres encadrés · Valence',
 };
 
 export const ui: Record<Lang, Diccionario> = { es, en, de, fr };

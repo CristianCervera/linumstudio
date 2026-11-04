@@ -1,0 +1,74 @@
+---
+// Página de un producto: presentación, sus trabajos, su simulador y sus precios
+import { Image } from 'astro:assets';
+import Sitio from '../layouts/Sitio.astro';
+import Galeria from './Galeria.astro';
+import Configurador from './Configurador.astro';
+import Precios from './Precios.astro';
+import { telas, marcos, cuadrito, desde, trabajos, type Producto } from '../data/estudio';
+import { ui, rutaDe, euros, type Lang } from '../i18n/ui';
+
+interface Props { lang: Lang; producto: Producto }
+const { lang, producto } = Astro.props;
+const t = ui[lang];
+const pagina = producto === 'tapiz' ? 'linum' : 'cuadritos';
+const p = producto === 'tapiz' ? t.paginas.linum : t.paginas.cuadritos;
+// Foto de presentación; en los tapices, que tienen muchas, no se repite en la galería
+const portada = trabajos[producto].find((x) => x.slug === (producto === 'tapiz' ? 'instalacion-ikat' : 'cuadrito-nacimiento'))!;
+const otro: Producto = producto === 'tapiz' ? 'cuadrito' : 'tapiz';
+
+const datos =
+  producto === 'tapiz'
+    ? [[telas.length, t.paginas.linum.telas], [marcos.filter((m) => m.color).length, t.paginas.linum.maderas]]
+    : [[cuadrito.telas.length, t.paginas.cuadritos.telas], [cuadrito.disenos.length, t.paginas.cuadritos.disenos]];
+---
+<Sitio lang={lang} pagina={pagina} title={p.title} description={p.description}>
+  <section class="intro" aria-labelledby="intro-title">
+    <div class="wrap intro-grid">
+    <div class="intro-inner">
+      <p class="eyebrow">{p.eyebrow}</p>
+      <h1 id="intro-title">{p.titulo} <em>{p.tituloEm}</em></h1>
+      <p class="lede">{p.lede}</p>
+      <div class="intro-actions">
+        <a class="btn btn-primary" href="#configurador">{p.disenar}</a>
+        <a class="btn btn-secondary" href="#precios">{t.precios.eyebrow}</a>
+      </div>
+      <ul class="facts" aria-label={t.a11y.resumen}>
+        {datos.map(([n, texto]) => <li><strong>{n}</strong> {texto}</li>)}
+        <li>{t.hero.desde} <strong>{euros(lang, desde[producto])}</strong></li>
+      </ul>
+    </div>
+    <Image class="intro-foto" src={portada.imagen} alt={t.trabajos.items[portada.slug].alt} widths={[480, 720, 960]} sizes="(min-width: 960px) 30rem, 92vw" loading="eager" />
+    </div>
+  </section>
+
+  <Galeria lang={lang} producto={producto} sin={producto === 'tapiz' ? portada.slug : undefined} />
+  <Configurador lang={lang} producto={producto} />
+  <Precios lang={lang} producto={producto} />
+
+  <aside class="otro" aria-label={t.productos[otro].nombre}>
+    <div class="wrap otro-inner">
+      <p>{t.otro[producto].texto(euros(lang, desde[otro]))}</p>
+      <a class="btn btn-secondary" href={rutaDe(lang, otro === 'tapiz' ? 'linum' : 'cuadritos')}>{t.otro[producto].ver} <span aria-hidden="true">→</span></a>
+    </div>
+  </aside>
+</Sitio>
+
+<style>
+  .intro { padding-block: clamp(3rem, 2rem + 4vw, 6rem) clamp(1rem, 0.5rem + 2vw, 2rem); }
+  .intro-grid { display: grid; gap: clamp(2rem, 1rem + 3vw, 4rem); align-items: center; }
+  @media (min-width: 960px) { .intro-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
+  .intro-foto { width: 100%; max-height: 34rem; object-fit: cover; border-radius: calc(var(--radius) * 1.25); }
+  @media (max-width: 959px) { .intro-foto { aspect-ratio: 4 / 3; } }
+  .intro-inner { display: grid; gap: 1.5rem; justify-items: start; }
+  .intro h1 { font-size: var(--step-3); max-width: 16ch; }
+  .intro h1 em { font-style: italic; color: var(--accent); }
+  .intro .lede { max-width: 40rem; }
+  .intro-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .facts { list-style: none; padding: 1.5rem 0 0; margin: 0.5rem 0 0; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: var(--step--1); }
+  .facts strong { color: var(--ink); font: 500 var(--step-1) / 1 var(--font-display); }
+
+  .otro { background: var(--accent-soft); padding-block: clamp(2.5rem, 2rem + 2vw, 4rem); }
+  .otro-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem 2rem; }
+  .otro p { font: 500 var(--step-1) / 1.35 var(--font-display); font-size: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem); max-width: 40rem; }
+</style>

@@ -18,7 +18,7 @@ export const contacto = {
   muestrario: { nombre: 'Flores Aparte', instagram: 'https://www.instagram.com/floresaparte/' },
   direccion: ['C/ de les Avellanes 19', '46003 Valencia'],
   mapa: 'https://maps.google.com/?q=Carrer+de+les+Avellanes+19,+46003+Valencia',
-  catalogo: { href: '/catalogo-linum-2026.pdf', paginas: 9 },
+  catalogo: { href: '/catalogo-linum-2026.pdf', paginas: 11 },
 };
 
 export type Familia = 'ikat' | 'floral';
@@ -76,6 +76,34 @@ export const tarifas = [
 export const enmarcado = { precio: 30 };
 export const diptico = { descuento: 0.25 };
 
+/**
+ * Cuadritos: una lámina sobre tela de fondo, en marco de madera natural (incluido). Catálogo de cuadritos 2026.
+ * Las medidas son por fuera del marco; los nombres de telas y diseños están en src/i18n/ui.ts.
+ */
+const cuadritoTelaImgs = import.meta.glob<{ default: ImageMetadata }>('../assets/cuadritos/telas/*.jpg', { eager: true });
+const disenoImgs = import.meta.glob<{ default: ImageMetadata }>('../assets/cuadritos/disenos/*.jpg', { eager: true });
+
+export const cuadrito = {
+  medida: '27 × 20',
+  ancho: 20,
+  alto: 27,
+  moldura: 2,
+  telas: ['flores-verdes', 'rayas-teja', 'hojas-malva', 'ramitas-mostaza', 'granadas', 'rayas-azules'].map((slug) => ({
+    slug,
+    imagen: img(cuadritoTelaImgs, 'cuadritos/telas', slug),
+  })),
+  disenos: ['sagrado-corazon', 'desamparados', 'madre', 'pilar'].map((slug) => ({
+    slug,
+    imagen: img(disenoImgs, 'cuadritos/disenos', slug),
+  })),
+  impresiones: [
+    { id: 'papel', precio: 20 },
+    { id: 'tela', precio: 25 },
+  ],
+} as const;
+
+export type Impresion = (typeof cuadrito.impresiones)[number]['id'];
+
 export const marcos = [
   { id: 'sin', color: null },
   { id: 'natural', color: '#c39a6b' },
@@ -83,23 +111,35 @@ export const marcos = [
   { id: 'negra', color: '#2b2622' },
 ] as const;
 
-/** Textos (alt y pie) en src/i18n/ui.ts, por slug. */
-export const trabajos = [
-  'instalacion-ikat',
-  'diptico-salon',
-  'flores-aparte',
-  'habana-dormitorio',
-  'diptico-dormitorio',
-  'ikat-verde-infantil',
-  'granada-recibidor',
-  'osaka-cocina',
-  'ubud-dormitorio',
-  'londres-estante',
-  'cadiz-diptico',
-  'valencia-bano',
-  'tulum-comedor',
-  'katmandu-patio',
-].map((slug) => ({ slug, imagen: img(trabajoImgs, 'trabajos', slug) }));
+export type Producto = 'tapiz' | 'cuadrito';
+
+/** Fotos de trabajos de cada producto, para su página. Textos (alt y pie) en src/i18n/ui.ts, por slug. */
+const trabajosDe = (slugs: string[]) => slugs.map((slug) => ({ slug, imagen: img(trabajoImgs, 'trabajos', slug) }));
+export const trabajos: Record<Producto, { slug: string; imagen: ImageMetadata }[]> = {
+  tapiz: trabajosDe([
+    'instalacion-ikat',
+    'diptico-salon',
+    'flores-aparte',
+    'habana-dormitorio',
+    'diptico-dormitorio',
+    'ikat-verde-infantil',
+    'granada-recibidor',
+    'osaka-cocina',
+    'ubud-dormitorio',
+    'londres-estante',
+    'cadiz-diptico',
+    'valencia-bano',
+    'tulum-comedor',
+    'katmandu-patio',
+  ]),
+  cuadrito: trabajosDe(['cuadritos-aparador', 'cuadrito-nacimiento', 'cuadrito-madre', 'cuadrito-desamparados']),
+};
+
+/** Precio más bajo de cada producto, para los «desde». */
+export const desde: Record<Producto, number> = {
+  tapiz: Math.min(...tarifas.map((x) => x.precio)),
+  cuadrito: Math.min(...cuadrito.impresiones.map((i) => i.precio)),
+};
 
 /** Todas las fotos de trabajos, para el mosaico de la cabecera. */
 export const mosaico = Object.values(trabajoImgs).map((m) => m.default);

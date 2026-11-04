@@ -1,24 +1,52 @@
 ---
 import { Image, getImage } from 'astro:assets';
-import { telas, familias, tamanos, marcos, enmarcado, diptico, contacto } from '../data/estudio';
+import { telas, familias, tamanos, marcos, enmarcado, diptico, contacto, cuadrito, type Producto } from '../data/estudio';
 import { estancias, colocar, medidasColgado, MOLDURA, SEPARACION_DIPTICO } from '../data/estancias';
 import Estancias from './Estancias.astro';
 import { ui, idiomas, euros as eur, type Lang } from '../i18n/ui';
 
-interface Props { lang: Lang }
-const { lang } = Astro.props;
+interface Props { lang: Lang; producto: Producto }
+const { lang, producto } = Astro.props;
+const esCuadrito = producto === 'cuadrito';
 const t = ui[lang].config;
 const f = t.foto;
+const c = t.cuadrito;
 const pct = diptico.descuento * 100;
 
 const grandes = await Promise.all(
   telas.map((t) => getImage({ src: t.imagen, width: 900, format: 'webp', quality: 80 }))
 );
 
+// Cuadritos: la tela de fondo se ve entera y el diseño, en la lámina del centro
+const grandesCuadrito = await Promise.all(
+  cuadrito.telas.map((t) => getImage({ src: t.imagen, width: 600, format: 'webp', quality: 80 }))
+);
+const disenos = await Promise.all(
+  cuadrito.disenos.map((d) => getImage({ src: d.imagen, width: 700, format: 'webp', quality: 82 }))
+);
+const natural = marcos.find((m) => m.id === 'natural')!;
+
 const inicial = { tela: telas.find((t) => t.slug === 'tanger') ?? telas[0], tamano: tamanos[2], marco: marcos[1] };
 const precioInicial = inicial.tamano.precio + enmarcado.precio;
 const euros = (n: number) => eur(lang, n);
 const marcoNombre = (id: (typeof marcos)[number]['id']) => t.marcos[id];
+
+const impresion0 = cuadrito.impresiones[0];
+const salida = esCuadrito
+  ? {
+      nombre: c.disenos[cuadrito.disenos[0].slug],
+      detalle: `${c.telas[cuadrito.telas[0].slug]} · ${c.impresiones[impresion0.id]} · ${cuadrito.medida} cm`,
+      precio: euros(impresion0.precio),
+      filas: [[`${c.nombre} ${cuadrito.medida} · ${c.impresiones[impresion0.id]}`, euros(impresion0.precio)]],
+      pedir: c.pedir,
+    }
+  : {
+      nombre: inicial.tela.nombre,
+      detalle: `${inicial.tamano.medida} cm · ${marcoNombre(inicial.marco.id)}`,
+      precio: euros(precioInicial),
+      filas: [[`${t.tapiz} ${inicial.tamano.medida}`, euros(inicial.tamano.precio)], [marcoNombre(inicial.marco.id), `+${euros(enmarcado.precio)}`]],
+      pedir: t.pedir,
+    };
 
 // Plantillas del mensaje de WhatsApp para el script: {tela}, {medida} y el marco ({marco} en minúsculas, {MARCO} tal cual)
 const textos = {
@@ -33,18 +61,36 @@ const textos = {
       t.mensaje({ diptico: d, tela: '{tela}', medida: '{medida}', marco: m ? '{MARCO}' : null }),
     ]))
   ),
+  pedir: t.pedir,
+  // Cuadrito: medidas por dentro del marco, que es siempre de madera natural; un mensaje por impresión con {diseno} y {tela}
+  cuadrito: {
+    nombre: c.nombre,
+    medida: cuadrito.medida,
+    ancho: cuadrito.ancho - 2 * cuadrito.moldura,
+    alto: cuadrito.alto - 2 * cuadrito.moldura,
+    moldura: cuadrito.moldura,
+    marco: natural.color,
+    pedir: c.pedir,
+    mensajes: Object.fromEntries(
+      cuadrito.impresiones.map((i) => [i.id, c.mensaje({ diseno: '{diseno}', tela: '{tela}', impresion: c.impresiones[i.id] })])
+    ),
+  },
 };
 const maxAlto = Math.max(...tamanos.map((t) => t.alto));
-const estanciaInicial = estancias[1];
-const colgadoInicial = medidasColgado(inicial.tamano.ancho, inicial.tamano.alto, inicial.marco.id !== 'sin', false);
-const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgadoInicial.alto);
+// El cuadrito, tan pequeño, solo se ve de cerca: no se elige estancia
+const estanciaInicial = esCuadrito ? estancias.find((e) => e.id === 'cerca')! : estancias[1];
+const colgadoInicial = esCuadrito
+  ? medidasColgado(cuadrito.ancho - 2 * cuadrito.moldura, cuadrito.alto - 2 * cuadrito.moldura, true, false, cuadrito.moldura)
+  : medidasColgado(inicial.tamano.ancho, inicial.tamano.alto, inicial.marco.id !== 'sin', false);
+// De cerca no hay foto: la colocación queda lista para cuando haya estancia
+const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colgadoInicial.ancho, colgadoInicial.alto);
 ---
 <section id="configurador" class="section config" aria-labelledby="config-title">
   <div class="wrap">
     <header class="section-head">
-      <p class="eyebrow">{t.eyebrow}</p>
-      <h2 id="config-title">{t.titulo}</h2>
-      <p class="lede">{t.lede}</p>
+      <p class="eyebrow">{esCuadrito ? c.eyebrow : t.eyebrow}</p>
+      <h2 id="config-title">{esCuadrito ? c.titulo : t.titulo}</h2>
+      <p class="lede">{esCuadrito ? c.lede : t.lede}</p>
     </header>
 
     <div class="config-grid">
@@ -53,7 +99,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
           class="wall"
           data-wall
           data-room={estanciaInicial.id}
-          style={`--fx:${sitioInicial.x};--fb:${sitioInicial.abajo};--fcm:${sitioInicial.cm};--y0:${sitioInicial.y0};--dx:0;--moldura:${MOLDURA};--separacion:${SEPARACION_DIPTICO}`}
+          style={`--fx:${sitioInicial.x};--fb:${sitioInicial.abajo};--fcm:${sitioInicial.cm};--y0:${sitioInicial.y0};--dx:0;--moldura:${MOLDURA};--mc:${cuadrito.moldura};--separacion:${SEPARACION_DIPTICO}`}
         >
           <div class="scene">
           <Estancias inicial={estanciaInicial.id} />
@@ -63,18 +109,23 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
             data-frames
             data-diptico="false"
             style={`--w:${inicial.tamano.ancho};--h:${inicial.tamano.alto};--max:${maxAlto};--frame:${inicial.marco.color}`}
-            data-marco={inicial.marco.id}
+            data-marco={esCuadrito ? 'natural' : inicial.marco.id}
+            data-producto={producto}
+            data-impresion={cuadrito.impresiones[0].id}
           >
             {[0, 1].map((i) => (
               <div class="frame" data-frame={i}>
-                <img
-                  src={grandes[telas.indexOf(inicial.tela)].src}
-                  alt=""
-                  width="900"
-                  height="900"
-                  decoding="async"
-                  data-fabric
-                />
+                <div class="lienzo">
+                  <img
+                    src={esCuadrito ? grandesCuadrito[0].src : grandes[telas.indexOf(inicial.tela)].src}
+                    alt=""
+                    width="900"
+                    height="900"
+                    decoding="async"
+                    data-fabric
+                  />
+                  <div class="lamina"><img src={disenos[0].src} alt="" decoding="async" loading="lazy" data-diseno /></div>
+                </div>
               </div>
             ))}
           </div>
@@ -95,11 +146,11 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
           </div>
         </div>
         <figcaption class="preview-caption" aria-live="polite">
-          <span class="preview-name" data-out-nombre>{inicial.tela.nombre}</span>
-          <span data-out-detalle>{inicial.tamano.medida} cm · {marcoNombre(inicial.marco.id)}</span>
-          <span class="preview-price" data-out-precio>{euros(precioInicial)}</span>
+          <span class="preview-name" data-out-nombre>{salida.nombre}</span>
+          <span data-out-detalle>{salida.detalle}</span>
+          <span class="preview-price" data-out-precio>{salida.precio}</span>
         </figcaption>
-        <fieldset class="rooms" data-rooms>
+        <fieldset class="rooms" data-rooms hidden={esCuadrito}>
           <legend>{t.verEn} <span class="rooms-note">· {t.escala}</span></legend>
           <div class="room-chips">
             {estancias.map((e) => (
@@ -141,6 +192,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       </figure>
 
       <form class="controls" data-config data-textos={JSON.stringify(textos)} onsubmit="return false">
+        {!esCuadrito && (<>
         <fieldset class="step">
           <legend><span class="step-n">1</span> {t.tela}</legend>
           <div class="filters" role="group" aria-label={ui[lang].a11y.filtrar}>
@@ -220,18 +272,80 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
           </label>
         </fieldset>
 
+        </>)}
+        {esCuadrito && (<>
+        <fieldset class="step">
+          <legend><span class="step-n">1</span> {c.tela}</legend>
+          <div class="swatches swatches-cuadrito">
+            {cuadrito.telas.map((tela, i) => (
+              <label class="swatch">
+                <input
+                  type="radio"
+                  name="tela-cuadrito"
+                  value={tela.slug}
+                  checked={i === 0}
+                  data-nombre={c.telas[tela.slug]}
+                  data-src={grandesCuadrito[i].src}
+                />
+                <span class="swatch-img">
+                  <Image src={tela.imagen} alt="" width={160} height={160} quality={72} loading="lazy" />
+                </span>
+                <span class="swatch-name">{c.telas[tela.slug]}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset class="step">
+          <legend><span class="step-n">2</span> {c.diseno}</legend>
+          <div class="swatches swatches-cuadrito disenos">
+            {cuadrito.disenos.map((d, i) => (
+              <label class="swatch">
+                <input
+                  type="radio"
+                  name="diseno"
+                  value={d.slug}
+                  checked={i === 0}
+                  data-nombre={c.disenos[d.slug]}
+                  data-src={disenos[i].src}
+                />
+                <span class="swatch-img">
+                  <Image src={d.imagen} alt="" width={160} quality={72} loading="lazy" />
+                </span>
+                <span class="swatch-name">{c.disenos[d.slug]}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset class="step">
+          <legend><span class="step-n">3</span> {c.impresion} <span class="legend-note">{c.impresionNota}</span></legend>
+          <div class="options impresiones">
+            {cuadrito.impresiones.map((im, i) => (
+              <label class="option">
+                <input type="radio" name="impresion" value={im.id} checked={i === 0} data-nombre={c.impresiones[im.id]} data-precio={im.precio} />
+                <span class="option-body">
+                  <span>{c.impresiones[im.id]}</span>
+                  <span class="option-price">{euros(im.precio)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <p class="hint">{c.presupuesto}</p>
+        </fieldset>
+        </>)}
+
         <div class="summary">
           <dl class="breakdown" data-breakdown>
-            <div><dt>{t.tapiz} {inicial.tamano.medida}</dt><dd>{euros(inicial.tamano.precio)}</dd></div>
-            <div><dt>{marcoNombre(inicial.marco.id)}</dt><dd>+{euros(enmarcado.precio)}</dd></div>
+            {salida.filas.map(([dt, dd]) => <div><dt>{dt}</dt><dd>{dd}</dd></div>)}
           </dl>
           <p class="total">
             <span>{t.total}</span>
-            <output data-total>{euros(precioInicial)}</output>
+            <output data-total>{salida.precio}</output>
           </p>
           <a class="btn btn-primary btn-block" href={contacto.whatsapp} data-whatsapp target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>
-            {t.pedir}
+            <span data-pedir>{salida.pedir}</span>
           </a>
           <button type="button" class="btn btn-secondary btn-block" data-compartir>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 15V3.5m0 0L7.5 8M12 3.5 16.5 8M6 11.5H5a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7.5a1 1 0 0 0-1-1h-1"/></svg>
@@ -255,7 +369,11 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     const DESCUENTO = 0.25;
     const WHATSAPP = 'https://wa.me/34634264135';
     const textos = JSON.parse(form.dataset.textos!) as {
-      intl: string; marca: string; tapiz: string; diptico: string; segundo: string; mensajes: Record<string, string>;
+      intl: string; marca: string; tapiz: string; diptico: string; segundo: string; mensajes: Record<string, string>; pedir: string;
+      cuadrito: {
+        nombre: string; medida: string; ancho: number; alto: number; moldura: number; marco: string; pedir: string;
+        mensajes: Record<string, string>;
+      };
     };
     const fmt = new Intl.NumberFormat(textos.intl, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
     const euros = (n: number) => fmt.format(Math.round(n));
@@ -266,11 +384,52 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     const total = $('[data-total]');
     const precio = $('[data-out-precio]');
     const cta = $<HTMLAnchorElement>('[data-whatsapp]');
+    const pedir = $('[data-pedir]');
     const fabrics = frames.querySelectorAll<HTMLImageElement>('[data-fabric]');
+    const laminas = frames.querySelectorAll<HTMLImageElement>('[data-diseno]');
+    const maxTapiz = frames.style.getPropertyValue('--max');
 
     const checked = (name: string) => form.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)!;
+    const esCuadrito = () => frames.dataset.producto === 'cuadrito';
+    const ponerSrc = (imgs: NodeListOf<HTMLImageElement>, src: string) =>
+      imgs.forEach((img) => { if (img.getAttribute('src') !== src) img.src = src; });
+    const pintarDesglose = (filas: [string, string][]) =>
+      breakdown.replaceChildren(
+        ...filas.map(([dt, dd]) => {
+          const row = document.createElement('div');
+          row.append(Object.assign(document.createElement('dt'), { textContent: dt }), Object.assign(document.createElement('dd'), { textContent: dd }));
+          return row;
+        })
+      );
+
+    // Cuadrito: medida fija y marco natural; se elige tela de fondo, diseño e impresión
+    const updateCuadrito = () => {
+      const c = textos.cuadrito;
+      const tela = checked('tela-cuadrito');
+      const diseno = checked('diseno');
+      const impresion = checked('impresion');
+      const importe = Number(impresion.dataset.precio);
+
+      ponerSrc(fabrics, tela.dataset.src!);
+      ponerSrc(laminas, diseno.dataset.src!);
+      frames.style.setProperty('--w', String(c.ancho));
+      frames.style.setProperty('--h', String(c.alto));
+      frames.style.setProperty('--max', String(c.alto + 2 * c.moldura + 3));
+      frames.style.setProperty('--frame', c.marco);
+      Object.assign(frames.dataset, { marco: 'natural', diptico: 'false', producto: 'cuadrito', impresion: impresion.value });
+
+      nombre.textContent = diseno.dataset.nombre!;
+      detalle.textContent = `${tela.dataset.nombre} · ${impresion.dataset.nombre} · ${c.medida} cm`;
+      pintarDesglose([[`${c.nombre} ${c.medida} · ${impresion.dataset.nombre}`, euros(importe)]]);
+      total.textContent = precio.textContent = euros(importe);
+      const mensaje = c.mensajes[impresion.value].replace('{diseno}', diseno.dataset.nombre!).replace('{tela}', tela.dataset.nombre!);
+      cta.href = `${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+      pedir.textContent = c.pedir;
+      colgar();
+    };
 
     const update = () => {
+      if (esCuadrito()) return updateCuadrito();
       const tela = checked('tela');
       const tamano = checked('tamano');
       const marco = checked('marco');
@@ -283,12 +442,12 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       const marcos = conMarco ? ENMARCADO * piezas : 0;
       const segundo = esDiptico ? base * (1 - DESCUENTO) : 0;
 
-      fabrics.forEach((img) => { if (img.getAttribute('src') !== tela.dataset.src) img.src = tela.dataset.src!; });
+      ponerSrc(fabrics, tela.dataset.src!);
       frames.style.setProperty('--w', tamano.dataset.ancho!);
       frames.style.setProperty('--h', tamano.dataset.alto!);
+      frames.style.setProperty('--max', maxTapiz);
       frames.style.setProperty('--frame', marco.dataset.color || 'transparent');
-      frames.dataset.marco = marco.value;
-      frames.dataset.diptico = String(esDiptico);
+      Object.assign(frames.dataset, { marco: marco.value, diptico: String(esDiptico), producto: 'tapiz' });
 
       nombre.textContent = tela.dataset.nombre!;
       detalle.textContent = `${esDiptico ? `${textos.diptico} · ` : ''}${tamano.value} cm · ${marco.dataset.nombre}`;
@@ -296,13 +455,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       const filas: [string, string][] = [[`${textos.tapiz} ${tamano.value}`, euros(base)]];
       if (esDiptico) filas.push([textos.segundo, `+${euros(segundo)}`]);
       if (conMarco) filas.push([`${marco.dataset.nombre}${esDiptico ? ' × 2' : ''}`, `+${euros(marcos)}`]);
-      breakdown.replaceChildren(
-        ...filas.map(([dt, dd]) => {
-          const row = document.createElement('div');
-          row.append(Object.assign(document.createElement('dt'), { textContent: dt }), Object.assign(document.createElement('dd'), { textContent: dd }));
-          return row;
-        })
-      );
+      pintarDesglose(filas);
       total.textContent = precio.textContent = euros(base + segundo + marcos);
 
       const mensaje = textos.mensajes[`${esDiptico}-${conMarco}`]
@@ -311,12 +464,17 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
         .replace('{marco}', marco.dataset.nombre!.toLowerCase())
         .replace('{MARCO}', marco.dataset.nombre!);
       cta.href = `${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+      pedir.textContent = textos.pedir;
       colgar();
     };
 
     // Coloca el tapiz en la foto de la estancia, a escala y sin tapar lámparas ni jarrones
     const wall = $<HTMLElement>('[data-wall]');
     const colgado = () => {
+      if (esCuadrito()) {
+        const c = textos.cuadrito;
+        return medidasColgado(c.ancho, c.alto, true, false, c.moldura);
+      }
       const tamano = checked('tamano');
       return medidasColgado(
         Number(tamano.dataset.ancho),
@@ -499,7 +657,8 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
         nombre: nombre.textContent!, detalle: detalle.textContent!, precio: total.textContent!, marca: textos.marca,
       });
       if (clave() !== c) return preparar();
-      lista = { clave: c, archivo: new File([blob], `linum-${checked('tela').value}.jpg`, { type: 'image/jpeg' }) };
+      const nombreArchivo = esCuadrito() ? `cuadrito-${checked('diseno').value}` : checked('tela').value;
+      lista = { clave: c, archivo: new File([blob], `linum-${nombreArchivo}.jpg`, { type: 'image/jpeg' }) };
       return lista.archivo;
     };
     const anticipar = () => {
@@ -526,10 +685,10 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
 
     // En móvil las telas van en una tira horizontal: deja a la vista la elegida
     const tira = $<HTMLElement>('.swatches');
-    const elegida = checked('tela').closest<HTMLElement>('.swatch')!;
+    const elegida = form.querySelector<HTMLInputElement>('.swatches input:checked')!.closest<HTMLElement>('.swatch')!;
     tira.scrollLeft = elegida.offsetLeft - tira.clientWidth / 2 + elegida.offsetWidth / 2;
 
-    const swatches = form.querySelectorAll<HTMLElement>('.swatch');
+    const swatches = form.querySelectorAll<HTMLElement>('.swatch[data-familia]');
     form.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((btn, _, all) => {
       btn.addEventListener('click', () => {
         const f = btn.dataset.filter;
@@ -594,9 +753,49 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   }
   .frames[data-marco='sin'] .frame { padding: 0; }
   .frames[data-marco='blanca'] .frame { box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08), 0 18px 30px -12px rgb(40 30 20 / 0.4); }
-  .frame img { width: 100%; height: 100%; object-fit: cover; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.12) inset; }
+  .lienzo { position: relative; width: 100%; height: 100%; container-type: size; }
+  .lienzo > img { width: 100%; height: 100%; object-fit: cover; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.12) inset; }
+
+  /* —— Cuadrito: la lámina sobre la tela de fondo, con las proporciones de los cuadritos reales —— */
+  .lamina {
+    --papel: #f8f4ec;
+    display: none; position: absolute; left: 50%; top: 47%; translate: -50% -50%;
+    width: 47%; height: 47%;
+    background: repeating-linear-gradient(90deg, rgb(120 100 70 / 0.05) 0 1px, transparent 1px 3px), var(--papel);
+    box-shadow: 0 0.4cqw 0.9cqw rgb(40 30 20 / 0.28);
+  }
+  .lamina img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+  .frames[data-producto='cuadrito'] .lamina { display: block; }
+  /* Impresa en tela: un retal de lino más grande, con los bordes deshilachados */
+  .frames[data-impresion='tela'] .lamina {
+    --lino: #ece2cf;
+    --fleco: 2.2cqw;
+    width: 54%; padding: 6% 8.5%;
+    background:
+      repeating-linear-gradient(0deg, rgb(255 255 255 / 0.18) 0 1px, transparent 1px 2px),
+      repeating-linear-gradient(90deg, rgb(110 90 60 / 0.07) 0 1px, transparent 1px 2px),
+      var(--lino);
+    box-shadow: 0 0.2cqw 0.5cqw rgb(40 30 20 / 0.18);
+  }
+  .frames[data-impresion='tela'] .lamina::before {
+    content: ''; position: absolute; inset: calc(-1 * var(--fleco));
+    --hilos-v: repeating-linear-gradient(90deg, var(--lino) 0 1px, transparent 1px 2.5px);
+    --hilos-h: repeating-linear-gradient(0deg, var(--lino) 0 1px, transparent 1px 2.5px);
+    background:
+      var(--hilos-v) top / 100% var(--fleco) no-repeat,
+      var(--hilos-v) bottom / 100% var(--fleco) no-repeat,
+      var(--hilos-h) left / var(--fleco) 100% no-repeat,
+      var(--hilos-h) right / var(--fleco) 100% no-repeat;
+    opacity: 0.9;
+  }
   .frames[data-diptico='false'] .frame[data-frame='1'] { display: none; }
   .frames[data-diptico='true'] .frame { height: calc(var(--h) / var(--max) * 64cqh); }
+  /* De cerca, el cuadrito con su moldura a escala: --w y --h son por dentro del marco */
+  .wall[data-room='cerca'] .frames[data-producto='cuadrito'] .frame {
+    height: calc((var(--h) + 2 * var(--mc)) / var(--max) * 80cqh);
+    aspect-ratio: calc(var(--w) + 2 * var(--mc)) / calc(var(--h) + 2 * var(--mc));
+    padding: calc(var(--mc) / var(--max) * 80cqh);
+  }
 
   /* —— Estancias: la foto marca la escala; --fcm es el % del recorte que mide 1 cm —— */
   .wall:not([data-room='cerca']) .scene { padding: 0; }
@@ -612,6 +811,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     transition: left 0.3s var(--ease), bottom 0.3s var(--ease);
   }
   .wall:not([data-room='cerca']) .frames[data-marco='sin'] { --m: 0; }
+  .wall:not([data-room='cerca']) .frames[data-producto='cuadrito'] { --m: var(--mc); }
   .wall:not([data-room='cerca']) .frame {
     width: calc((var(--w) + 2 * var(--m)) * var(--cm));
     height: calc((var(--h) + 2 * var(--m)) * var(--cm));
@@ -684,6 +884,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   .g-texto { fill: var(--accent); font: 600 12px var(--font-body); text-anchor: middle; }
   .g-sofa { fill: color-mix(in oklab, var(--wall), black 22%); }
 
+  .rooms[hidden] { display: none; }
   .rooms { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 0.6rem; }
   .rooms legend { display: block; padding: 0; margin-bottom: 0.6rem; font: 500 var(--step--1) / 1.4 var(--font-body); }
   .rooms-note { color: var(--ink-2); font-weight: 400; }
@@ -699,7 +900,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   .room-chip input:checked + span { background: var(--ink); border-color: var(--ink); color: var(--surface); }
   .room-chip input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-  .preview-caption { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; color: var(--ink-2); }
+  .preview-caption { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; text-align: center; color: var(--ink-2); }
   .preview-name { font: 500 var(--step-2) / 1 var(--font-display); color: var(--ink); }
 
   /* —— Controles —— */
@@ -730,7 +931,8 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   .swatch:has(input:checked) img { outline: 2.5px solid var(--ink); outline-offset: 3px; }
   .swatch:has(input:focus-visible) img { outline: 3px solid var(--accent); outline-offset: 3px; }
   .swatch-img { position: relative; display: block; }
-  .swatch-name { font-size: var(--step--1); line-height: 1.25; }
+  .disenos .swatch img { aspect-ratio: 3 / 4; object-fit: contain; background: #faf8f3; }
+  .swatch-name { font-size: var(--step--1); line-height: 1.25; text-align: center; }
   .badge {
     position: absolute; left: 6px; top: 6px; padding: 3px 7px; border-radius: 999px;
     background: var(--accent); color: var(--accent-ink);
@@ -740,7 +942,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
   .options { display: grid; gap: 0.5rem; }
   .sizes { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
   .sizes .option-body > span:first-child { white-space: nowrap; }
-  .frames-opts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .frames-opts, .impresiones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .option { position: relative; cursor: pointer; }
   .option-body {
     display: flex; align-items: center; gap: 0.75rem; min-height: 52px; padding: 0.6rem 1rem;
@@ -788,7 +990,7 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
     }
     .wall { aspect-ratio: 16 / 10; border-radius: 0; }
     .wall[data-room='foto'] { aspect-ratio: 4 / 3; }
-    .preview-caption { padding-inline: var(--gutter); flex-wrap: nowrap; align-items: baseline; gap: 0.6rem; font-size: var(--step--1); }
+    .preview-caption { padding-inline: var(--gutter); flex-direction: row; flex-wrap: nowrap; align-items: baseline; gap: 0.6rem; text-align: left; font-size: var(--step--1); }
     .preview-caption > [data-out-detalle] { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .preview-name { font-size: var(--step-1); flex: none; }
     .preview-price { display: block; flex: none; font: 600 var(--step-1) / 1 var(--font-display); color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
@@ -820,6 +1022,8 @@ const sitioInicial = colocar(estanciaInicial.foto!, colgadoInicial.ancho, colgad
       scroll-snap-type: x proximity;
     }
     .swatch { scroll-snap-align: start; }
+    /* Pocas telas y diseños: una sola fila */
+    .swatches-cuadrito { grid-template-rows: none; }
 
     .frames-opts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .frames-opts .option-body {

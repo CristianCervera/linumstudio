@@ -1,11 +1,11 @@
 ---
-import { ui, idiomas, langs, rutaDe, defaultLang, type Lang } from '../i18n/ui';
+import { ui, idiomas, langs, rutaDe, defaultLang, type Lang, type Pagina } from '../i18n/ui';
 import { contacto, tarifas } from '../data/estudio';
 
-interface Props { lang: Lang; title: string; description: string }
-const { lang, title, description } = Astro.props;
+interface Props { lang: Lang; pagina: Pagina; title: string; description: string }
+const { lang, pagina, title, description } = Astro.props;
 const absoluta = (ruta: string) => (Astro.site ? new URL(ruta, Astro.site).href : ruta);
-const canonica = absoluta(rutaDe(lang));
+const canonica = absoluta(rutaDe(lang, pagina));
 const imagen = absoluta('/og.jpg');
 
 // Datos del negocio para Google (búsquedas locales y ficha): la dirección es la del muestrario
@@ -18,7 +18,7 @@ const negocio = {
   '@id': absoluta('/#negocio'),
   name: 'Linum Estudio',
   description,
-  url: canonica,
+  url: absoluta(rutaDe(lang)),
   image: imagen,
   telephone: contacto.telefonoHref.replace('tel:', ''),
   priceRange: `${Math.min(...precios)}–${Math.max(...precios)} €`,
@@ -57,8 +57,8 @@ const negocio = {
     <meta property="og:locale" content={idiomas[lang].og} />
     {langs.filter((l) => l !== lang).map((l) => <meta property="og:locale:alternate" content={idiomas[l].og} />)}
     <meta name="twitter:card" content="summary_large_image" />
-    {langs.map((l) => <link rel="alternate" hreflang={l} href={absoluta(rutaDe(l))} />)}
-    <link rel="alternate" hreflang="x-default" href={absoluta(rutaDe(defaultLang))} />
+    {langs.map((l) => <link rel="alternate" hreflang={l} href={absoluta(rutaDe(l, pagina))} />)}
+    <link rel="alternate" hreflang="x-default" href={absoluta(rutaDe(defaultLang, pagina))} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap.xml" />
     <script type="application/ld+json" set:html={JSON.stringify(negocio)} />
@@ -112,6 +112,8 @@ const negocio = {
 
   *, *::before, *::after { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 5rem; }
+  /* En móvil la barra superior lleva una segunda fila con el menú */
+  @media (max-width: 819px) { html { scroll-padding-top: 8rem; } }
   body {
     margin: 0;
     background: var(--surface);

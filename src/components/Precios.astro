@@ -1,0 +1,54 @@
+---
+import { tarifas, enmarcado, diptico, cuadrito, type Producto } from '../data/estudio';
+import { ui, euros, type Lang } from '../i18n/ui';
+
+interface Props { lang: Lang; producto: Producto }
+const { lang, producto } = Astro.props;
+const t = ui[lang];
+const filas =
+  producto === 'tapiz'
+    ? tarifas.map((x) => ({ dt: x.medidas, precio: x.precio }))
+    : cuadrito.impresiones.map((i) => ({ dt: t.config.cuadrito.impresiones[i.id], precio: i.precio }));
+---
+<section id="precios" class="section" aria-labelledby="precios-title">
+  <div class="wrap precios-grid">
+    <header class="section-head">
+      <p class="eyebrow">{t.precios.eyebrow}</p>
+      <h2 id="precios-title">{t.precios.titulo}</h2>
+      <p class="lede">{producto === 'tapiz' ? t.precios.lede : t.precios.ledeCuadritos}</p>
+    </header>
+    <div class="price-card">
+      <dl class="price-list">
+        {filas.map((x) => (
+          <div>
+            <dt>{x.dt}</dt>
+            <dd>{euros(lang, x.precio)}</dd>
+          </div>
+        ))}
+      </dl>
+      {producto === 'tapiz' ? (
+        <dl class="price-extras">
+          <div><dt>{t.precios.enmarcado}</dt><dd>+{euros(lang, enmarcado.precio)}</dd></div>
+          <div><dt>{t.precios.diptico}</dt><dd>−{diptico.descuento * 100} %</dd></div>
+        </dl>
+      ) : (
+        <p class="price-nota">{t.config.cuadrito.presupuesto}</p>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .precios-grid { display: grid; gap: 2rem; align-items: start; }
+  @media (min-width: 960px) { .precios-grid { grid-template-columns: 1fr 1.1fr; } }
+  .price-card { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--raised); padding: clamp(1.25rem, 1rem + 1.5vw, 2.25rem); display: grid; gap: 1.5rem; }
+  .price-list, .price-extras { margin: 0; display: grid; }
+  .price-list div, .price-extras div { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding-block: 0.9rem; border-bottom: 1px solid var(--rule); }
+  .price-list div:last-child { border-bottom: 0; }
+  .price-list dd { margin: 0; font: 600 var(--step-2) / 1 var(--font-display); font-variant-numeric: lining-nums tabular-nums; }
+  .price-extras { background: var(--sunken); border-radius: 10px; padding-inline: 1rem; }
+  .price-extras div:last-child { border-bottom: 0; }
+  .price-extras dt { color: var(--ink-2); }
+  .price-extras dd { margin: 0; font-weight: 500; white-space: nowrap; }
+  .price-nota { background: var(--sunken); border-radius: 10px; padding: 0.9rem 1rem; color: var(--ink-2); }
+</style>

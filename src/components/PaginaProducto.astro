@@ -6,6 +6,8 @@ import Galeria from './Galeria.astro';
 import Configurador from './Configurador.astro';
 import Precios from './Precios.astro';
 import { telas, marcos, cuadrito, desde, trabajos, type Producto } from '../data/estudio';
+import fotoTapices from '../assets/portada-tapices.jpg';
+import type { ImageMetadata } from 'astro';
 import { ui, rutaDe, euros, type Lang } from '../i18n/ui';
 
 interface Props { lang: Lang; producto: Producto }
@@ -13,8 +15,36 @@ const { lang, producto } = Astro.props;
 const t = ui[lang];
 const pagina = producto === 'tapiz' ? 'linum' : 'cuadritos';
 const p = producto === 'tapiz' ? t.paginas.linum : t.paginas.cuadritos;
-// Foto de presentación; en los tapices, que tienen muchas, no se repite en la galería
-const portada = trabajos[producto].find((x) => x.slug === (producto === 'tapiz' ? 'instalacion-ikat' : 'cuadrito-nacimiento'))!;
+// Cabecera: tres columnas que se deslizan con fotos de trabajos de este producto y muestras de él,
+// telas enmarcadas en los tapices y cuadritos montados (tela de fondo y diseño) en los cuadritos.
+type Pieza =
+  | { tipo: 'foto'; imagen: ImageMetadata }
+  | { tipo: 'tela'; imagen: ImageMetadata; madera: string }
+  | { tipo: 'cuadrito'; tela: ImageMetadata; diseno: ImageMetadata };
+const fotos: Pieza[] = [
+  ...(producto === 'tapiz' ? [{ tipo: 'foto' as const, imagen: fotoTapices }] : []),
+  ...trabajos[producto].map((x) => ({ tipo: 'foto' as const, imagen: x.imagen })),
+];
+const maderas = marcos.filter((m) => m.color).map((m) => m.color!);
+const muestras: Pieza[] =
+  producto === 'tapiz'
+    ? ['tanger', 'osaka', 'habana', 'granada', 'katmandu', 'cadiz', 'bogota'].map((slug, i) => ({
+        tipo: 'tela' as const, imagen: telas.find((x) => x.slug === slug)!.imagen, madera: maderas[i % maderas.length],
+      }))
+    : ([['flores-verdes', 'madre'], ['rayas-teja', 'sagrado-corazon'], ['hojas-malva', 'desamparados'], ['ramitas-mostaza', 'pilar'], ['granadas', 'sagrado-corazon'], ['rayas-azules', 'desamparados']] as const).map(([tl, d]) => ({
+        tipo: 'cuadrito' as const,
+        tela: cuadrito.telas.find((x) => x.slug === tl)!.imagen,
+        diseno: cuadrito.disenos.find((x) => x.slug === d)!.imagen,
+      }));
+// Se intercalan: una muestra cada dos fotos (o cada foto, si hay pocas)
+const cada = fotos.length > muestras.length * 1.5 ? 2 : 1;
+const piezas: Pieza[] = [];
+let m = 0;
+fotos.forEach((f, i) => { piezas.push(f); if ((i + 1) % cada === 0 && m < muestras.length) piezas.push(muestras[m++]); });
+while (m < muestras.length) piezas.push(muestras[m++]);
+const COLUMNAS = 3;
+const columnas = Array.from({ length: COLUMNAS }, (_, c) => piezas.filter((_, i) => i % COLUMNAS === c));
+const ritmos = [70, 86, 78];
 const otro: Producto = producto === 'tapiz' ? 'cuadrito' : 'tapiz';
 
 const datos =
@@ -38,11 +68,39 @@ const datos =
         <li>{t.hero.desde} <strong>{euros(lang, desde[producto])}</strong></li>
       </ul>
     </div>
-    <Image class="intro-foto" src={portada.imagen} alt={t.trabajos.items[portada.slug].alt} widths={[480, 720, 960]} sizes="(min-width: 960px) 30rem, 92vw" loading="eager" />
+    <div class="vitrina" data-vitrina>
+      <div class="vitrina-cols" aria-hidden="true">
+      {columnas.map((col, c) => (
+        <div class="vitrina-col" style={`--dur:${ritmos[c]}s;--delay:-${(ritmos[c] * c) / 3}s`}>
+          {[...col, ...col, ...col].map((x, i) => {
+            const eager = i < 2 ? 'eager' : 'lazy';
+            if (x.tipo === 'foto') return <Image class="vitrina-foto" src={x.imagen} alt="" widths={[240, 400]} sizes="(min-width: 960px) 13vw, 32vw" loading={eager} />;
+            if (x.tipo === 'tela') return (
+              <span class={`vitrina-muestra campo-${i % 3}`}>
+                <span class="vitrina-marco" style={`--madera:${x.madera}`}><Image src={x.imagen} alt="" width={200} height={200} quality={72} loading={eager} /></span>
+              </span>
+            );
+            return (
+              <span class={`vitrina-muestra campo-${i % 3}`}>
+                <span class="vitrina-marco vitrina-cuadrito">
+                  <Image class="cuadrito-tela" src={x.tela} alt="" width={200} quality={72} loading={eager} />
+                  <span class="cuadrito-lamina"><Image src={x.diseno} alt="" width={160} quality={75} loading={eager} /></span>
+                </span>
+              </span>
+            );
+          })}
+        </div>
+      ))}
+      </div>
+      <button class="vitrina-pausa" type="button" aria-pressed="false" aria-label={t.a11y.pausar} data-pausa>
+        <svg class="icono-pausa" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+        <svg class="icono-play" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/></svg>
+      </button>
+    </div>
     </div>
   </section>
 
-  <Galeria lang={lang} producto={producto} sin={producto === 'tapiz' ? portada.slug : undefined} />
+  <Galeria lang={lang} producto={producto} />
   <Configurador lang={lang} producto={producto} />
   <Precios lang={lang} producto={producto} />
 
@@ -54,12 +112,62 @@ const datos =
   </aside>
 </Sitio>
 
+<script>
+  // Pausa del movimiento de la cabecera
+  document.querySelectorAll<HTMLElement>('[data-vitrina]').forEach((v) => {
+    const b = v.querySelector<HTMLButtonElement>('[data-pausa]')!;
+    b.addEventListener('click', () => {
+      const pausado = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', String(pausado));
+      v.toggleAttribute('data-pausado', pausado);
+    });
+  });
+</script>
+
 <style>
-  .intro { padding-block: clamp(3rem, 2rem + 4vw, 6rem) clamp(1rem, 0.5rem + 2vw, 2rem); }
+  /* —— Cabecera: texto a la izquierda y una vitrina de columnas en movimiento a la derecha —— */
+  .intro { padding-block: clamp(2rem, 1rem + 3vw, 4rem) clamp(1rem, 0.5rem + 2vw, 2rem); overflow-x: clip; }
   .intro-grid { display: grid; gap: clamp(2rem, 1rem + 3vw, 4rem); align-items: center; }
-  @media (min-width: 960px) { .intro-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
-  .intro-foto { width: 100%; max-height: 34rem; object-fit: cover; border-radius: calc(var(--radius) * 1.25); }
-  @media (max-width: 959px) { .intro-foto { aspect-ratio: 4 / 3; } }
+  @media (min-width: 960px) {
+    .intro-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  }
+  .vitrina {
+    --campo-0: #e7ebe0; --campo-1: #e5dacb; --campo-2: #d3dccb;
+    position: relative; overflow: hidden; height: 26rem;
+    background: var(--sunken); border-radius: calc(var(--radius) * 1.5);
+  }
+  @media (min-width: 960px) {
+    /* La vitrina llega hasta el borde derecho de la ventana */
+    .vitrina { margin-right: calc((100vw - min(100vw - 2 * var(--gutter), var(--max))) / -2); border-radius: calc(var(--radius) * 1.5) 0 0 calc(var(--radius) * 1.5); height: min(calc(100svh - var(--topbar-h, 64px) - 4rem), 40rem); }
+  }
+  .vitrina-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; padding: 0 0.75rem; height: 100%; }
+  .vitrina-col { animation: vitrina var(--dur) linear var(--delay) infinite; }
+  .vitrina-col:nth-child(even) { animation-direction: reverse; }
+  @keyframes vitrina { to { translate: 0 calc(-100% / 3); } }
+  .vitrina[data-pausado] .vitrina-col { animation-play-state: paused; }
+  /* Margen en vez de gap: así un tercio exacto de la columna es una vuelta completa */
+  .vitrina-col > * { display: block; width: 100%; margin-bottom: 0.75rem; border-radius: 10px; }
+  .vitrina-foto { height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
+  .vitrina-muestra { display: grid !important; place-items: center; aspect-ratio: 3 / 4; }
+  .campo-0 { background: var(--campo-0); } .campo-1 { background: var(--campo-1); } .campo-2 { background: var(--campo-2); }
+  .vitrina-marco { display: block; width: 58%; aspect-ratio: 3 / 4; padding: 7%; background: var(--madera, #c39a6b); box-shadow: 0 10px 18px -12px rgb(42 36 31 / 0.5); }
+  .vitrina-marco img { width: 100%; height: 100%; object-fit: cover; }
+  .vitrina-cuadrito { position: relative; width: 52%; aspect-ratio: 20 / 27; }
+  .vitrina-cuadrito .cuadrito-tela { position: absolute; inset: 7%; width: 86%; height: 86%; }
+  .cuadrito-lamina { position: absolute; inset: 24% 26%; display: grid; place-items: center; background: #f6efe2; padding: 6%; }
+  .cuadrito-lamina img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+  .vitrina-pausa {
+    position: absolute; right: 1rem; bottom: 1rem;
+    display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--raised); color: var(--ink); cursor: pointer;
+  }
+  .vitrina-pausa svg { width: 18px; height: 18px; }
+  .vitrina-pausa .icono-play, .vitrina-pausa[aria-pressed='true'] .icono-pausa { display: none; }
+  .vitrina-pausa[aria-pressed='true'] .icono-play { display: block; }
+  @media (prefers-reduced-motion: reduce) {
+    .vitrina-col { animation: none; }
+    .vitrina-pausa { display: none; }
+  }
   .intro-inner { display: grid; gap: 1.5rem; justify-items: start; }
   .intro h1 { font-size: var(--step-3); max-width: 16ch; }
   .intro h1 em { font-style: italic; color: var(--accent); }

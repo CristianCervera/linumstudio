@@ -77,6 +77,14 @@ const enlaces: { href: string; texto: string; actual: boolean }[] = [
 </Base>
 
 <script>
+  // Alto real de la barra superior (en móvil lleva una segunda fila): lo usan los elementos fijos bajo ella
+  const barra = document.querySelector<HTMLElement>('.topbar');
+  if (barra) {
+    const medir = () => document.documentElement.style.setProperty('--topbar-h', `${barra.offsetHeight}px`);
+    medir();
+    new ResizeObserver(medir).observe(barra);
+  }
+
   // Cierra el menú de idioma al pulsar fuera o con Escape
   const menu = document.querySelector<HTMLDetailsElement>('[data-lang-menu]');
   if (menu) {

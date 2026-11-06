@@ -6,6 +6,7 @@ import { contacto, trabajos, telas, mosaico, cuadrito, desde, type Producto } fr
 import { ui, idiomas, rutaDe, euros, type Lang } from '../i18n/ui';
 import { iconoDescarga } from './iconos';
 import portada from '../assets/catalogo-portada.jpg';
+import fotoTapices from '../assets/portada-tapices.jpg';
 import fs from 'node:fs';
 
 interface Props { lang: Lang }
@@ -20,12 +21,22 @@ const ritmos = [84, 102, 76, 96, 88, 108];
 const pdfBytes = fs.statSync('public' + contacto.catalogo.href).size;
 const pdfMb = (pdfBytes / 1024 / 1024).toLocaleString(idiomas[lang].intl, { maximumFractionDigits: 1 });
 
-// El encuadre (pos) deja a la vista las piezas al recortar la foto
-const productos: { id: Producto; pagina: 'linum' | 'cuadritos'; foto: string; pos: string }[] = [
-  { id: 'tapiz', pagina: 'linum', foto: 'diptico-salon', pos: '50% 0%' },
-  { id: 'cuadrito', pagina: 'cuadritos', foto: 'cuadritos-aparador', pos: '50% 45%' },
-];
+// Cada producto: foto grande, muestras de lo que se elige (telas o diseños) y su página.
+// El encuadre (pos) deja a la vista las piezas al recortar la foto.
 const fotoDe = (p: Producto, slug: string) => trabajos[p].find((x) => x.slug === slug)!;
+const muestrasTela = ['tanger', 'osaka', 'katmandu', 'habana', 'granada', 'cadiz'].map((slug) => telas.find((x) => x.slug === slug)!);
+const productos = [
+  {
+    id: 'tapiz' as Producto, pagina: 'linum' as const, imagen: fotoTapices, pos: '45% 58%',
+    cuenta: `${telas.length} ${t.hero.telas}`,
+    muestras: muestrasTela.map((x) => ({ slug: x.slug, nombre: x.nombre, imagen: x.imagen, href: `${rutaDe(lang, 'linum')}?tela=${x.slug}#configurador` })),
+  },
+  {
+    id: 'cuadrito' as Producto, pagina: 'cuadritos' as const, imagen: fotoDe('cuadrito', 'cuadritos-aparador').imagen, pos: '50% 50%',
+    cuenta: `${cuadrito.disenos.length} ${t.hero.disenos}`,
+    muestras: cuadrito.disenos.map((d) => ({ slug: d.slug, nombre: t.config.cuadrito.disenos[d.slug], imagen: d.imagen, href: `${rutaDe(lang, 'cuadritos')}?diseno=${d.slug}#configurador` })),
+  },
+];
 ---
 <Sitio lang={lang} pagina="inicio" title={t.meta.title} description={t.meta.description}>
   <section id="inicio" class="hero" data-hero>
@@ -75,23 +86,39 @@ const fotoDe = (p: Producto, slug: string) => trabajos[p].find((x) => x.slug ===
         <p class="eyebrow">{t.productos.eyebrow}</p>
         <h2 id="productos-title">{t.productos.titulo}</h2>
       </header>
-      <ul class="productos">
-        {productos.map((p) => {
-          const foto = fotoDe(p.id, p.foto);
+      <div class="productos">
+        {productos.map((p, n) => {
           const tp = t.productos[p.id];
+          const href = rutaDe(lang, p.pagina);
           return (
-            <li class="producto">
-              <Image src={foto.imagen} alt="" widths={[480, 720, 960]} sizes="(min-width: 820px) 36rem, 92vw" style={`object-position:${p.pos}`} />
-              <div class="producto-texto">
-                <h3><a href={rutaDe(lang, p.pagina)}>{tp.nombre}</a></h3>
+            <article class={`pieza pieza-${p.id}`} aria-labelledby={`pieza-${p.id}`}>
+              <a class="pieza-foto" href={href} tabindex="-1" aria-hidden="true">
+                <Image src={p.imagen} alt="" widths={[560, 840, 1200]} sizes="(min-width: 960px) 40rem, 100vw" style={`object-position:${p.pos}`} />
+              </a>
+              <div class="pieza-texto">
+                <h3 id={`pieza-${p.id}`}><a href={href}>{tp.nombre}</a></h3>
                 <p>{tp.texto}</p>
-                <p class="producto-desde">{t.productos.desde} <strong>{euros(lang, desde[p.id])}</strong></p>
-                <span class="producto-ver" aria-hidden="true">{tp.ver} <span>→</span></span>
+                <div class="pieza-elige">
+                  <p class="pieza-cuenta">{p.cuenta}</p>
+                  <ul class={`pieza-muestras muestras-${p.id}`} role="list">
+                    {p.muestras.map((m, i) => (
+                      <li>
+                        <a href={m.href} title={m.nombre} aria-label={m.nombre} style={`--n:${i}`}>
+                          <Image src={m.imagen} alt="" width={160} height={p.id === 'tapiz' ? 160 : undefined} quality={72} loading="lazy" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div class="pieza-pie">
+                  <p class="pieza-desde">{t.productos.desde} <strong>{euros(lang, desde[p.id])}</strong></p>
+                  <a class={`btn btn-primary`} href={href}>{tp.ver}</a>
+                </div>
               </div>
-            </li>
+            </article>
           );
         })}
-      </ul>
+      </div>
     </div>
   </section>
 
@@ -233,26 +260,40 @@ const fotoDe = (p: Producto, slug: string) => trabajos[p].find((x) => x.slug ===
   .contact-list a:hover { color: var(--accent); }
 
 
-  /* —— Productos: cada tarjeta entera lleva a su página —— */
-  .productos { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(1.25rem, 1rem + 1.5vw, 2rem); }
-  @media (min-width: 820px) { .productos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .producto {
-    position: relative; display: grid; grid-template-rows: auto 1fr; overflow: hidden;
-    border: 1px solid var(--rule); border-radius: calc(var(--radius) * 1.25); background: var(--raised);
-    transition: box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+  /* —— Productos: un bloque grande por producto, foto a un lado y lo que se elige al otro —— */
+  .productos { display: grid; gap: clamp(1.5rem, 1rem + 2vw, 2.5rem); }
+  .pieza {
+    display: grid; overflow: hidden; border-radius: calc(var(--radius) * 1.5);
+    background: var(--raised);
   }
-  .producto:hover { transform: translateY(-3px); box-shadow: 0 30px 50px -30px rgb(42 36 31 / 0.4); }
-  .producto:has(a:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
-  .producto img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }
-  .producto-texto { display: grid; gap: 0.75rem; align-content: start; justify-items: center; text-align: center; padding: clamp(1.25rem, 1rem + 1.5vw, 2rem); }
-  .producto h3 { font-size: var(--step-2); }
-  .producto h3 a { text-decoration: none; }
-  .producto h3 a:focus-visible { outline: none; }
-  .producto h3 a::after { content: ''; position: absolute; inset: 0; }
-  .producto-texto > p:not(.producto-desde) { color: var(--ink-2); }
-  .producto-desde { color: var(--ink-2); }
-  .producto-desde strong { color: var(--ink); font: 600 var(--step-1) / 1 var(--font-display); }
-  .producto-ver { margin-top: 0.25rem; font-weight: 500; color: var(--accent); }
-  .producto-ver span { display: inline-block; transition: translate 0.2s var(--ease); }
-  .producto:hover .producto-ver span { translate: 0.25rem 0; }
+  .pieza-cuadrito { background: var(--accent-soft); }
+  .pieza-foto { display: block; overflow: hidden; min-height: 18rem; }
+  .pieza-foto img { width: 100%; height: 100%; aspect-ratio: 4 / 3; object-fit: cover; transition: scale 0.6s var(--ease); }
+  .pieza:hover .pieza-foto img { scale: 1.03; }
+  .pieza-texto { display: grid; gap: 1.25rem; align-content: center; padding: clamp(1.5rem, 1rem + 3vw, 3.5rem); }
+  .pieza h3 { font-size: var(--step-3); letter-spacing: -0.02em; line-height: 1; }
+  .pieza h3 a { text-decoration: none; }
+  .pieza h3 a:hover { color: var(--accent); }
+  .pieza-texto > p { color: var(--ink-2); max-width: 34rem; }
+  .pieza-elige { display: grid; gap: 0.75rem; }
+  .pieza-cuenta { font-size: var(--step--1); font-weight: 500; }
+  .pieza-muestras { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .pieza-muestras a { display: block; overflow: hidden; border-radius: 10px; transition: transform 0.25s var(--ease); }
+  .pieza-muestras a:hover { transform: translateY(-3px) rotate(-2deg); }
+  .pieza-muestras img { display: block; object-fit: cover; }
+  .muestras-tapiz { display: grid; grid-template-columns: repeat(6, minmax(0, 3.75rem)); }
+  .muestras-tapiz img { width: 100%; height: auto; aspect-ratio: 1; }
+  .muestras-cuadrito a { background: var(--raised); padding: 0.35rem; }
+  .muestras-cuadrito img { width: 3.25rem; height: 4.25rem; object-fit: contain; mix-blend-mode: multiply; }
+  .pieza-pie { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; margin-top: 0.5rem; }
+  .pieza-desde { color: var(--ink-2); }
+  .pieza-desde strong { color: var(--ink); font: 600 var(--step-2) / 1 var(--font-display); }
+
+  @media (min-width: 960px) {
+    .pieza { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); min-height: 34rem; }
+    .pieza-cuadrito { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+    .pieza-cuadrito .pieza-foto { order: 2; }
+    .pieza-foto { position: relative; }
+    .pieza-foto img { position: absolute; inset: 0; aspect-ratio: auto; }
+  }
 </style>

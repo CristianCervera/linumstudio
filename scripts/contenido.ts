@@ -26,10 +26,17 @@ const raiz = new URL('../', import.meta.url);
 type Item = { slug: string };
 type Contenido = { telas: Item[]; trabajos: Item[]; cuadrito: { telas: Item[]; disenos: Item[] }; precios: unknown };
 
-const pedir = async (ruta: string) => {
-  const r = await fetch(`${api}${ruta}`, { signal: AbortSignal.timeout(30_000) });
-  if (!r.ok) throw new Error(`${api}${ruta} → HTTP ${r.status}`);
-  return r;
+// Con reintentos: un servicio gratuito de Render tarda hasta un minuto en despertar
+const pedir = async (ruta: string, intentos = 4): Promise<Response> => {
+  try {
+    const r = await fetch(`${api}${ruta}`, { signal: AbortSignal.timeout(90_000) });
+    if (r.ok) return r;
+    if (r.status < 500 || intentos <= 1) throw new Error(`${api}${ruta} → HTTP ${r.status}`);
+  } catch (e) {
+    if (intentos <= 1 || (e instanceof Error && e.message.includes('→ HTTP'))) throw e;
+  }
+  await new Promise((ok) => setTimeout(ok, 5000));
+  return pedir(ruta, intentos - 1);
 };
 
 const contenido = (await (await pedir('/api/contenido')).json()) as Contenido;

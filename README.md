@@ -16,6 +16,8 @@ En `/admin/` hay un panel con usuario y contraseña para gestionar los ejemplos 
 - `LINUM_API_URL`: si está definida, `npm run build` descarga antes el contenido del back (`npm run contenido`) a `src/data/contenido.json` y `src/assets/`, y la web se construye con él. Sin ella se usa lo que haya en el repositorio. En el build de producción tienen que estar las dos.
 - **Publicar web**, en el panel, hace que el back llame al deploy hook de la web (`DEPLOY_HOOK_URL` en el back), que lanza ese build.
 
+En Render, la web, el back y su base de datos se crean juntos con el Blueprint (`render.yaml`) de linumstudio-back.
+
 Para trabajar en local con el panel: arranca el back (`npm start` en linumstudio-back) y aquí `npm run dev`; entra en http://localhost:4321/admin/. Para traer a este repositorio lo que hay en el back: `LINUM_API_URL=http://localhost:3001 npm run contenido`.
 
 ## Dónde está cada cosa

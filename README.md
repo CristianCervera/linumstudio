@@ -12,7 +12,7 @@ npm run build    # genera dist/
 
 En `/admin/` hay un panel con usuario y contraseña para gestionar los ejemplos (fotos de trabajos), las telas de tapiz, las telas y los diseños de los cuadritos y los precios, traer las fotos nuevas de Instagram y publicar la web. Habla con el back, [linumstudio-back](https://github.com/cristiancervera/linumstudio-back), que guarda el contenido y las imágenes (su README explica cómo montarlo y cómo conseguir el token de Instagram).
 
-- `PUBLIC_LINUM_API_URL`: dirección del back que usa el panel (por defecto `http://localhost:3001`).
+- `PUBLIC_LINUM_API_URL`: dirección del back que usa el panel. Si no está, `http://localhost:3001` con `npm run dev` y `https://linumstudio-back.onrender.com` en la web publicada.
 - `LINUM_API_URL`: si está definida, `npm run build` descarga antes el contenido del back (`npm run contenido`) a `src/data/contenido.json` y `src/assets/`, y la web se construye con él. Sin ella se usa lo que haya en el repositorio. En el build de producción tienen que estar las dos.
 - **Publicar web**, en el panel, hace que el back llame al deploy hook de la web (`DEPLOY_HOOK_URL` en el back), que lanza ese build.
 

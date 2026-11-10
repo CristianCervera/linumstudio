@@ -3,7 +3,10 @@
 // trabajos), las telas, las telas de fondo y los diseños de los cuadritos y los precios. También trae las fotos nuevas
 // de Instagram y publica la web (el back llama al deploy hook y el build descarga el contenido con `npm run contenido`).
 // La página es estática: todo se hace en el navegador contra la API de PUBLIC_LINUM_API_URL.
-const api = (import.meta.env.PUBLIC_LINUM_API_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
+// Sin PUBLIC_LINUM_API_URL: en desarrollo, el back local; en cualquier web publicada, el de Render.
+const api = (
+  import.meta.env.PUBLIC_LINUM_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : 'https://linumstudio-back.onrender.com')
+).replace(/\/+$/, '');
 ---
 <!doctype html>
 <html lang="es">

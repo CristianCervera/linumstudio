@@ -51,7 +51,17 @@ function flecos(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, 
 
 export async function imagenDiseno(wall: HTMLElement, pie: Pie): Promise<Blob> {
   const escena = wall.querySelector<HTMLElement>('.scene')!;
-  const caja = wall.getBoundingClientRect();
+  // Con la foto del cliente, la imagen es solo la parte de la pared que ocupa la foto (sin las franjas de alrededor)
+  const pared = wall.getBoundingClientRect();
+  const miFoto = wall.dataset.room === 'foto' ? wall.querySelector<HTMLImageElement>('[data-mi-foto]') : null;
+  const fr = miFoto?.offsetParent ? miFoto.getBoundingClientRect() : null;
+  const caja = fr
+    ? (() => {
+        const x = Math.max(pared.left, fr.left);
+        const y = Math.max(pared.top, fr.top);
+        return new DOMRect(x, y, Math.min(pared.right, fr.right) - x, Math.min(pared.bottom, fr.bottom) - y);
+      })()
+    : pared;
   const k = ANCHO / caja.width;
   const alto = Math.round(caja.height * k);
   const css = getComputedStyle(document.documentElement);

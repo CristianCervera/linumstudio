@@ -30,6 +30,7 @@ const inicial = { tela: telas.find((t) => t.slug === 'tanger') ?? telas[0], tama
 const precioInicial = inicial.tamano.precio + enmarcado.precio;
 const euros = (n: number) => eur(lang, n);
 const marcoNombre = (id: (typeof marcos)[number]['id']) => t.marcos[id];
+const numero = new Intl.NumberFormat(idiomas[lang].intl, { maximumFractionDigits: 1 });
 
 const impresion0 = cuadrito.impresiones[0];
 const salida = esCuadrito
@@ -62,6 +63,9 @@ const textos = {
     ]))
   ),
   pedir: t.pedir,
+  enmarcado: enmarcado.precio,
+  descuento: diptico.descuento,
+  foto: { abarca: f.abarca, raro: f.raro, mover: f.mover, aprox: f.aprox, intl: idiomas[lang].intl },
   // Cuadrito: medidas por dentro del marco, que es siempre de madera natural; un mensaje por impresión con {diseno} y {tela}
   cuadrito: {
     nombre: c.nombre,
@@ -103,7 +107,7 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
         >
           <div class="scene">
           <Estancias inicial={estanciaInicial.id} />
-          <img class="mi-foto" data-estancia="foto" data-mi-foto alt="" />
+          <img class="mi-foto" data-estancia="foto" data-mi-foto alt="" draggable="false" />
           <div
             class="frames"
             data-frames
@@ -113,6 +117,7 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
             data-producto={producto}
             data-impresion={cuadrito.impresiones[0].id}
           >
+            <span class="tp-etiqueta" data-tp-etiqueta aria-hidden="true"></span>
             {[0, 1].map((i) => (
               <div class="frame" data-frame={i}>
                 <div class="lienzo">
@@ -131,18 +136,38 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
           </div>
           <div class="floor" aria-hidden="true"></div>
           </div>
-          <div class="calibrar" data-calibrar>
-            <div class="folio" data-folio><span class="folio-esquina" data-esquina></span></div>
-            <div class="foto-barra">
-              <p>{f.calibrar}</p>
-              <button type="button" class="foto-btn" data-sin-folio>{f.sinFolio}</button>
-              <button type="button" class="foto-btn foto-btn-ok" data-listo>{f.listo}</button>
-            </div>
+          <!-- Tu pared: guía del paso 1, medida del paso 2 y ayudas del paso 3 -->
+          <svg class="tp-dibujo" viewBox="0 0 320 170" aria-hidden="true">
+            <rect width="320" height="170" rx="12" class="g-pared" />
+            <rect y="146" width="320" height="24" class="g-suelo" />
+            <rect x="122" y="30" width="76" height="56" rx="2" class="g-tapiz" />
+            <path d="M78 146v-30a10 10 0 0 1 10-10h144a10 10 0 0 1 10 10v30" class="g-sofa" />
+            <rect x="68" y="118" width="184" height="28" rx="8" class="g-sofa" />
+            <path d="M68 100h184" class="g-medida" />
+            <circle cx="68" cy="100" r="6" class="g-punto" /><circle cx="252" cy="100" r="6" class="g-punto" />
+          </svg>
+          <div class="tp-medida" data-tp-medida>
+            <svg class="tp-lineas" aria-hidden="true"><line class="tp-linea-fondo" data-tp-linea /><line class="tp-linea" data-tp-linea /></svg>
+            <span class="tp-cota" data-tp-cota aria-hidden="true"></span>
+            <button type="button" class="tp-punto" data-tp-punto="a" aria-label={`${f.punto} 1`}></button>
+            <button type="button" class="tp-punto" data-tp-punto="b" aria-label={`${f.punto} 2`}></button>
+            <div class="tp-lupa" data-tp-lupa aria-hidden="true"></div>
           </div>
+          <button type="button" class="tp-flecha tp-flecha-ant" data-tp-flecha="-1" aria-label={f.anterior}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button>
+          <button type="button" class="tp-flecha tp-flecha-sig" data-tp-flecha="1" aria-label={f.siguiente}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>
+          <p class="tp-aviso" data-tp-aviso hidden><span data-tp-aviso-texto></span><button type="button" class="foto-btn" data-tp-ir="medir" hidden>{f.medir}</button></p>
           <div class="foto-barra foto-acciones">
-            <p data-foto-ayuda data-aprox={f.aprox}>{f.mover}</p>
-            <button type="button" class="foto-btn" data-reajustar>{f.reajustar}</button>
-            <button type="button" class="foto-btn" data-cambiar>{f.cambiar}</button>
+            <button type="button" class="foto-btn" data-tp-pantalla>{f.pantalla}</button>
+            <button type="button" class="foto-btn" data-tp-ir="foto">{f.cambiar}</button>
+          </div>
+          <!-- Accesos directos sobre la vista previa -->
+          <div class="tp-ctas">
+            {!esCuadrito && (
+              <button type="button" class="tp-cta" data-tp-abrir>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="13" r="3.5" /></svg>
+                <span><strong>{f.probar}</strong><small>{f.probarNota}</small></span>
+              </button>
+            )}
           </div>
         </div>
         <figcaption class="preview-caption" aria-live="polite">
@@ -167,28 +192,74 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
           </div>
         </fieldset>
 
-        <dialog class="guia" data-guia aria-labelledby="guia-titulo">
-          <form method="dialog" class="guia-cerrar">
-            <button aria-label={f.cerrar}>×</button>
-          </form>
-          <h3 id="guia-titulo">{f.titulo}</h3>
-          <svg class="guia-dibujo" viewBox="0 0 320 150" aria-hidden="true">
-            <rect width="320" height="150" rx="10" class="g-pared" />
-            <rect y="128" width="320" height="22" class="g-suelo" />
-            <rect x="133" y="38" width="54" height="38" rx="1" class="g-folio" />
-            <text x="160" y="62" class="g-texto">A4</text>
-            <path d="M88 128v-30a10 10 0 0 1 10-10h124a10 10 0 0 1 10 10v30" class="g-sofa" />
-            <rect x="78" y="100" width="164" height="28" rx="8" class="g-sofa" />
-          </svg>
-          <p>{f.intro}</p>
-          <ol>{f.pasos.map((p) => <li>{p}</li>)}</ol>
-          <p class="hint">{f.privacidad}</p>
-          <label class="btn btn-primary btn-block">
-            <input type="file" accept="image/*" data-archivo />
-            {f.subir}
-          </label>
-          <form method="dialog"><button class="btn btn-secondary btn-block">{f.ahoraNo}</button></form>
-        </dialog>
+        {!esCuadrito && (
+          <header class="tp-cabecera">
+            <p class="tp-titulo">{f.titulo}</p>
+            <ol class="tp-pasos">
+              {f.pasos.map((p, i) => <li data-tp-paso-n={['foto', 'medir', 'colocar'][i]}><span>{i + 1}</span> {p}</li>)}
+            </ol>
+            <button type="button" class="tp-cerrar" data-tp-cerrar aria-label={f.cerrar}>×</button>
+          </header>
+          <div class="tp-panel">
+            <section data-tp-seccion="foto">
+              <h3>{f.fotoTitulo}</h3>
+              <p>{f.fotoTexto}</p>
+              <div class="tp-botones">
+                <label class="btn btn-primary"><input type="file" accept="image/*" capture="environment" data-tp-archivo />{f.hacer}</label>
+                <label class="btn btn-secondary"><input type="file" accept="image/*" data-tp-archivo />{f.galeria}</label>
+                <button type="button" class="btn btn-secondary" data-tp-ultima hidden>{f.ultima}</button>
+              </div>
+              <details class="tp-consejos">
+                <summary>{f.consejos}</summary>
+                <ul>{f.consejosLista.map((c) => <li>{c}</li>)}</ul>
+              </details>
+              <p class="hint">{f.privacidad}</p>
+            </section>
+            <section data-tp-seccion="medir">
+              <h3>{f.medirTitulo}</h3>
+              <p>{f.medirTexto}</p>
+              <div class="tp-refs">
+                {f.referencias.map(([nombre, cm]) => (
+                  <button type="button" class="chip" data-tp-ref={String(cm)} aria-pressed="false">{nombre} · {numero.format(cm)} cm</button>
+                ))}
+              </div>
+              <label class="tp-cm">
+                <span>{f.mide}</span>
+                <input type="number" inputmode="decimal" min="1" max="5000" step="0.1" data-tp-cm />
+                <span>cm</span>
+              </label>
+              <p class="tp-abarca" data-tp-abarca aria-live="polite"></p>
+              <div class="tp-botones">
+                <button type="button" class="btn btn-secondary" data-tp-sin-medida>{f.sinMedida}</button>
+                <button type="button" class="btn btn-primary" data-tp-colocar disabled>{f.colocar}</button>
+              </div>
+            </section>
+            <section data-tp-seccion="colocar">
+              <div class="tp-tira" role="group" aria-label={t.tela}>
+                {telas.map((tela) => (
+                  <button type="button" class="tp-tela" data-tp-elegir="tela" data-valor={tela.slug} aria-label={tela.nombre} title={tela.nombre}>
+                    <Image src={tela.imagen} alt="" width={160} height={160} quality={72} loading="lazy" />
+                  </button>
+                ))}
+              </div>
+              <div class="tp-chips" role="group" aria-label={t.medida}>
+                {tamanos.map((tam) => <button type="button" class="chip" data-tp-elegir="tamano" data-valor={tam.medida}>{tam.medida}</button>)}
+              </div>
+              <div class="tp-chips" role="group" aria-label={t.marco}>
+                {marcos.map((m) => <button type="button" class="chip" data-tp-elegir="marco" data-valor={m.id}>{marcoNombre(m.id)}</button>)}
+                <button type="button" class="chip" data-tp-diptico>{t.diptico}</button>
+              </div>
+              <div class="tp-botones tp-acciones">
+                <button type="button" class="btn btn-secondary" data-tp-compartir>{t.compartir}</button>
+                <a class="btn btn-primary" data-tp-pedir href={contacto.whatsapp} target="_blank" rel="noopener">{f.pedir} · <span data-tp-precio></span></a>
+              </div>
+              <div class="tp-enlaces">
+                <button type="button" data-tp-ir="medir">{f.medirOtraVez}</button>
+                <button type="button" data-tp-ir="foto">{f.cambiar}</button>
+              </div>
+            </section>
+          </div>
+        )}
       </figure>
 
       <form class="controls" data-config data-textos={JSON.stringify(textos)} onsubmit="return false">
@@ -359,22 +430,25 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
 </section>
 
 <script>
-  import { estancias, colocar, desplazamiento, medidasColgado, A4 } from '../data/estancias';
+  import { estancias, colocar, desplazamiento, medidasColgado } from '../data/estancias';
   import { imagenDiseno } from '../scripts/imagen-diseno';
+  import { iniciarTuPared, type TextosFoto } from '../scripts/tu-pared';
 
   const form = document.querySelector<HTMLFormElement>('[data-config]');
   const frames = document.querySelector<HTMLElement>('[data-frames]');
   if (form && frames) {
-    const ENMARCADO = 30;
-    const DESCUENTO = 0.25;
     const WHATSAPP = 'https://wa.me/34634264135';
     const textos = JSON.parse(form.dataset.textos!) as {
       intl: string; marca: string; tapiz: string; diptico: string; segundo: string; mensajes: Record<string, string>; pedir: string;
+      enmarcado: number; descuento: number; foto: TextosFoto;
       cuadrito: {
         nombre: string; medida: string; ancho: number; alto: number; moldura: number; marco: string; pedir: string;
         mensajes: Record<string, string>;
       };
     };
+    // Precios del contenido (se cambian en el panel)
+    const ENMARCADO = textos.enmarcado;
+    const DESCUENTO = textos.descuento;
     const fmt = new Intl.NumberFormat(textos.intl, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
     const euros = (n: number) => fmt.format(Math.round(n));
     const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
@@ -466,10 +540,12 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
       cta.href = `${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
       pedir.textContent = textos.pedir;
       colgar();
+      tuPared?.sincronizar();
     };
 
     // Coloca el tapiz en la foto de la estancia, a escala y sin tapar lámparas ni jarrones
     const wall = $<HTMLElement>('[data-wall]');
+    let tuPared: ReturnType<typeof iniciarTuPared> | undefined;
     const colgado = () => {
       if (esCuadrito()) {
         const c = textos.cuadrito;
@@ -486,7 +562,7 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
     const colgar = () => {
       const fondo = document.querySelector<HTMLInputElement>('input[name="fondo"]:checked')!.value;
       wall.dataset.room = fondo;
-      if (fondo === 'foto') return pintarFoto();
+      if (fondo === 'foto') return tuPared?.pintar();
       const foto = estancias.find((e) => e.id === fondo)?.foto;
       if (!foto) return;
       const { ancho, alto } = colgado();
@@ -498,144 +574,29 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
       wall.style.setProperty('--dx', String(desplazamiento(foto, wall.clientWidth / wall.clientHeight)));
     };
 
-    // Tu pared: la foto del cliente, que no sale del navegador. Un folio A4 pegado en la pared da la escala.
-    // Todo se guarda en fracciones de la foto: el folio (fu, fv, fw) y el centro del tapiz (u, v).
-    const miFoto = $<HTMLImageElement>('[data-mi-foto]');
-    const folio = $<HTMLElement>('[data-folio]');
-    const guia = $<HTMLDialogElement>('[data-guia]');
-    const ayuda = $<HTMLElement>('[data-foto-ayuda]');
-    const textoMover = ayuda.textContent!;
-    const ANCHO_SIN_FOLIO = 300; // cm de pared que suponemos en la foto si no hay folio
-    const pared = { fu: 0.5, fv: 0.45, fw: 0.1, u: 0.5, v: 0.45, anchoCm: ANCHO_SIN_FOLIO };
-    const limitar = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max);
-
-    // Dónde se pinta la foto en la pared: entera mientras se ajusta el folio, y a sangre centrada en él
-    // después, salvo que eso recorte mucho (una foto vertical en la vista apaisada del móvil)
-    const encaje = () => {
-      const sw = wall.clientWidth;
-      const sh = wall.clientHeight;
-      const cabe = Math.min(sw / miFoto.naturalWidth, sh / miFoto.naturalHeight);
-      const cubre = Math.max(sw / miFoto.naturalWidth, sh / miFoto.naturalHeight);
-      const entera = wall.dataset.foto === 'calibrando' || cubre / cabe > 1.25;
-      const s = entera ? cabe : cubre;
-      const w = miFoto.naturalWidth * s;
-      const h = miFoto.naturalHeight * s;
-      const lado = (hueco: number, mide: number, f: number) =>
-        entera ? (hueco - mide) / 2 : limitar(hueco / 2 - f * mide, hueco - mide, 0);
-      return { x: lado(sw, w, pared.fu), y: lado(sh, h, pared.fv), w, h, sw, sh };
-    };
-
-    const pintarFoto = () => {
-      if (!wall.dataset.foto || !miFoto.naturalWidth) return;
-      const r = encaje();
-      Object.assign(miFoto.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
-      if (wall.dataset.foto === 'calibrando') {
-        const w = pared.fw * r.w;
-        const h = (w * A4.alto) / A4.ancho;
-        Object.assign(folio.style, {
-          left: `${r.x + pared.fu * r.w - w / 2}px`, top: `${r.y + pared.fv * r.h - h / 2}px`, width: `${w}px`, height: `${h}px`,
-        });
-        return;
-      }
-      const cm = r.w / pared.anchoCm;
-      const centroY = r.y + pared.v * r.h;
-      wall.style.setProperty('--fx', String(((r.x + pared.u * r.w) / r.sw) * 100));
-      wall.style.setProperty('--fcm', String((cm / r.sw) * 100));
-      wall.style.setProperty('--fb', String(((r.sh - centroY - (colgado().alto * cm) / 2) / r.sh) * 100));
-    };
     new ResizeObserver(() => colgar()).observe(wall);
 
-    // Arrastre con el dedo o el ratón; mover recibe el desplazamiento y el evento
-    const arrastrar = (el: HTMLElement, puede: () => boolean, mover: (dx: number, dy: number, e: PointerEvent) => void) => {
-      el.addEventListener('pointerdown', (e) => {
-        if (!puede()) return;
-        e.preventDefault();
-        e.stopPropagation();
-        el.setPointerCapture(e.pointerId);
-        let px = e.clientX;
-        let py = e.clientY;
-        wall.classList.add('arrastrando');
-        const mv = (ev: PointerEvent) => { mover(ev.clientX - px, ev.clientY - py, ev); px = ev.clientX; py = ev.clientY; };
-        const fin = () => {
-          el.removeEventListener('pointermove', mv);
-          el.removeEventListener('pointerup', fin);
-          el.removeEventListener('pointercancel', fin);
-          wall.classList.remove('arrastrando');
-          anticipar();
-        };
-        el.addEventListener('pointermove', mv);
-        el.addEventListener('pointerup', fin);
-        el.addEventListener('pointercancel', fin);
+    // Tu pared: la foto del cliente, a pantalla completa (ver src/scripts/tu-pared.ts). Solo en los tapices.
+    const miFoto = $<HTMLImageElement>('[data-mi-foto]');
+    if (!esCuadrito()) {
+      tuPared = iniciarTuPared({
+        figura: wall.closest<HTMLElement>('.preview')!,
+        wall,
+        form,
+        colgado,
+        colgar,
+        alCambiar: () => anticipar(),
+        textos: textos.foto,
       });
-    };
-    arrastrar(folio, () => true, (dx, dy) => {
-      const r = encaje();
-      pared.fu = limitar(pared.fu + dx / r.w, 0, 1);
-      pared.fv = limitar(pared.fv + dy / r.h, 0, 1);
-      pintarFoto();
-    });
-    // La esquina estira el folio desde su centro, sin perder la proporción del A4
-    arrastrar($('[data-esquina]'), () => true, (_dx, _dy, e) => {
-      const r = encaje();
-      const caja = wall.getBoundingClientRect();
-      const cx = caja.left + r.x + pared.fu * r.w;
-      const cy = caja.top + r.y + pared.fv * r.h;
-      const mitad = Math.max(Math.abs(e.clientX - cx), (Math.abs(e.clientY - cy) * A4.ancho) / A4.alto);
-      pared.fw = limitar((2 * mitad) / r.w, 0.01, 1);
-      pintarFoto();
-    });
-    arrastrar(frames, () => wall.dataset.room === 'foto' && wall.dataset.foto === 'lista', (dx, dy) => {
-      const r = encaje();
-      pared.u = limitar(pared.u + dx / r.w, 0, 1);
-      pared.v = limitar(pared.v + dy / r.h, 0, 1);
-      pintarFoto();
-    });
+    }
 
-    const colocarEnFoto = (conFolio: boolean) => {
-      pared.anchoCm = conFolio ? A4.ancho / pared.fw : ANCHO_SIN_FOLIO;
-      pared.u = pared.fu;
-      pared.v = pared.fv;
-      ayuda.textContent = conFolio ? textoMover : ayuda.dataset.aprox!;
-      ayuda.toggleAttribute('data-aviso', !conFolio);
-      wall.dataset.foto = 'lista';
-      pintarFoto();
-      anticipar();
-    };
-    $('[data-listo]').addEventListener('click', () => colocarEnFoto(true));
-    $('[data-sin-folio]').addEventListener('click', () => colocarEnFoto(false));
-    $('[data-reajustar]').addEventListener('click', () => { wall.dataset.foto = 'calibrando'; pintarFoto(); });
-    $('[data-cambiar]').addEventListener('click', () => guia.showModal());
-
-    $<HTMLInputElement>('[data-archivo]').addEventListener('change', async (e) => {
-      const input = e.currentTarget as HTMLInputElement;
-      const archivo = input.files?.[0];
-      input.value = '';
-      if (!archivo) return;
-      if (miFoto.src.startsWith('blob:')) URL.revokeObjectURL(miFoto.src);
-      miFoto.src = URL.createObjectURL(archivo);
-      await miFoto.decode().catch(() => {});
-      Object.assign(pared, { fu: 0.5, fv: 0.45, fw: 0.1 });
-      wall.dataset.foto = 'calibrando';
-      guia.close();
-      pintarFoto();
-    });
-
-    // Al elegir «Tu pared» sin foto se abre la guía; si se cierra sin foto, se vuelve a la estancia de antes
-    let anterior = wall.dataset.room!;
-    $('[data-rooms]').addEventListener('change', (e) => {
-      const fondo = (e.target as HTMLInputElement).value;
-      if (fondo !== 'foto') anterior = fondo;
-      else if (!wall.dataset.foto) guia.showModal();
-    });
-    guia.addEventListener('close', () => {
-      if (wall.dataset.foto) return;
-      document.querySelector<HTMLInputElement>(`input[name="fondo"][value="${anterior}"]`)!.checked = true;
-      colgar();
-    });
-
-    // Llegada desde la portada con una tela o un diseño elegidos: ?tela=tanger, ?diseno=madre
+    // Llegada con una tela o un diseño elegidos (desde la portada o el código QR): ?tela=tanger&tamano=70×50&marco=natural&diptico=1, ?diseno=madre
     const params = new URLSearchParams(location.search);
-    for (const k of ['tela', 'marco', 'diseno']) {
+    if (params.get('diptico') === '1') {
+      const d = form.querySelector<HTMLInputElement>('input[name="diptico"]');
+      if (d) d.checked = true;
+    }
+    for (const k of ['tela', 'tamano', 'marco', 'diseno']) {
       const v = params.get(k);
       const input = v ? form.querySelector<HTMLInputElement>(`input[name="${k}"][value="${CSS.escape(v)}"]`) : null;
       if (!input) continue;
@@ -841,16 +802,6 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
   .wall.arrastrando .frames { cursor: grabbing; }
   .wall.arrastrando :is(.frames, .frame, .mi-foto) { transition: none; }
 
-  .calibrar { position: absolute; inset: 0; background: rgb(20 15 10 / 0.25); }
-  .folio {
-    position: absolute; touch-action: none; cursor: move;
-    border: 2px solid #fff; background: rgb(255 255 255 / 0.18);
-    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 0 0 9999px rgb(20 15 10 / 0.2);
-  }
-  .folio-esquina {
-    position: absolute; right: -14px; bottom: -14px; width: 28px; height: 28px; border-radius: 50%;
-    background: #fff; box-shadow: 0 1px 4px rgb(0 0 0 / 0.4); cursor: nwse-resize; touch-action: none;
-  }
   .foto-barra {
     position: absolute; inset: auto 0.5rem 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem;
     padding: 0.5rem 0.5rem 0.5rem 0.85rem; border-radius: 14px;
@@ -865,36 +816,168 @@ const sitioInicial = colocar((estanciaInicial.foto ?? estancias[1].foto)!, colga
   .foto-btn:hover { border-color: var(--ink-2); }
   .foto-btn-ok { background: var(--ink); border-color: var(--ink); color: var(--surface); }
 
-  .calibrar, .foto-acciones { display: none; }
-  .wall[data-room='foto'][data-foto='calibrando'] .calibrar { display: block; }
-  .wall[data-room='foto'][data-foto='lista'] .foto-acciones { display: flex; }
 
-  .guia {
-    width: min(100% - 2rem, 32rem); max-height: calc(100dvh - 2rem); padding: 1.5rem; overflow: auto;
-    border: 0; border-radius: var(--radius); background: var(--surface); color: var(--ink);
-    box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.45);
-  }
-  .guia[open] { display: grid; gap: 1rem; }
-  .guia::backdrop { background: rgb(20 15 10 / 0.5); }
-  .guia h3 { font-size: var(--step-2); padding-right: 2rem; }
-  .guia p, .guia ol { margin: 0; }
-  .guia ol { display: grid; gap: 0.6rem; padding-left: 1.25rem; }
-  .guia li::marker { color: var(--accent); font-weight: 600; }
-  .guia form { margin: 0; }
-  .guia-cerrar { position: absolute; top: 0.75rem; right: 0.75rem; }
-  .guia-cerrar button {
-    width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; color: var(--ink-2);
-    font-size: 1.6rem; line-height: 1; cursor: pointer;
-  }
-  .guia-cerrar button:hover { background: var(--raised); color: var(--ink); }
-  .guia label input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-  .guia label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .guia-dibujo { width: 100%; height: auto; }
+  .g-sofa { fill: color-mix(in oklab, var(--wall), black 22%); }
   .g-pared { fill: var(--wall); }
   .g-suelo { fill: color-mix(in oklab, var(--wall), black 8%); }
-  .g-folio { fill: #fff; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; }
-  .g-texto { fill: var(--accent); font: 600 12px var(--font-body); text-anchor: middle; }
-  .g-sofa { fill: color-mix(in oklab, var(--wall), black 22%); }
+  .g-tapiz { fill: #c39a6b; stroke: #fff; stroke-width: 2; }
+  .g-medida { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 6 4; }
+  .g-punto { fill: #fff; stroke: var(--accent); stroke-width: 3; }
+
+  /* —— Tu pared —— */
+  .foto-acciones { display: none; }
+  .wall[data-room='foto'][data-foto='lista'] .foto-acciones { display: flex; }
+  .preview[data-inmersivo] .foto-acciones { display: none !important; }
+
+  /* Accesos sobre la vista previa: probar en tu pared (y, en la fase 2, con la cámara) */
+  .tp-ctas { position: absolute; left: 0.6rem; bottom: 0.6rem; z-index: 2; display: flex; flex-wrap: wrap; gap: 0.4rem; max-width: calc(100% - 1.2rem); }
+  .tp-ctas:empty, .wall[data-room='foto'][data-foto='lista'] .tp-ctas, .preview[data-inmersivo] .tp-ctas { display: none; }
+  .tp-cta {
+    display: inline-flex; align-items: center; gap: 0.6rem; min-height: 44px; padding: 0.45rem 0.9rem 0.45rem 0.7rem;
+    border: 0; border-radius: 999px; cursor: pointer; text-align: left; color: var(--ink);
+    background: color-mix(in oklab, var(--surface) 92%, transparent); backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px -6px rgb(0 0 0 / 0.35); font: 400 var(--step--1) / 1.2 var(--font-body);
+  }
+  .tp-cta:hover { background: var(--surface); }
+  .tp-cta:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .tp-cta svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linejoin: round; }
+  .tp-cta span { display: grid; }
+  .tp-cta small { color: var(--ink-2); font-size: 0.75rem; }
+
+  /* Medida sobre la tela del tapiz */
+  .tp-etiqueta {
+    display: none; position: absolute; left: 50%; bottom: 100%; translate: -50% -8px; z-index: 1;
+    padding: 0.25rem 0.6rem; border-radius: 999px; white-space: nowrap; pointer-events: none;
+    background: rgb(25 22 19 / 0.78); color: #fff; font: 500 0.75rem / 1.2 var(--font-body); font-variant-numeric: lining-nums;
+  }
+  .wall[data-room='foto'][data-foto='lista'] .tp-etiqueta { display: block; }
+
+  /* Paso 1: dibujo que explica la foto */
+  .tp-dibujo { display: none; position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: min(80%, 26rem); height: auto; }
+  .preview[data-paso='foto'] .tp-dibujo { display: block; }
+  .preview[data-paso='foto'] :is(.mi-foto, .frames) { display: none !important; }
+
+  /* Paso 2: los dos extremos de la medida, la línea y la lupa */
+  .tp-medida { display: none; position: absolute; inset: 0; z-index: 2; touch-action: none; cursor: crosshair; }
+  .wall[data-room='foto'][data-foto='midiendo'] .tp-medida { display: block; }
+  .tp-lineas { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .tp-linea-fondo { stroke: rgb(0 0 0 / 0.55); stroke-width: 5; stroke-linecap: round; }
+  .tp-linea { stroke: #fff; stroke-width: 2.5; stroke-dasharray: 9 6; stroke-linecap: round; }
+  .tp-punto {
+    position: absolute; width: 46px; height: 46px; translate: -50% -50%; padding: 0; border-radius: 50%; cursor: grab; touch-action: none;
+    border: 3px solid #fff; background: rgb(59 86 54 / 0.3); box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45), 0 2px 10px rgb(0 0 0 / 0.4);
+  }
+  .tp-punto::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; translate: -50% -50%; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5); }
+  .tp-punto:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .tp-cota {
+    position: absolute; translate: -50% calc(-100% - 30px); padding: 0.35rem 0.7rem; border-radius: 999px; white-space: nowrap; pointer-events: none;
+    background: var(--ink); color: #fff; font: 600 0.875rem / 1 var(--font-body); box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+  }
+  .tp-lupa {
+    display: none; position: absolute; z-index: 3; width: 120px; height: 120px; border-radius: 50%; pointer-events: none;
+    border: 3px solid #fff; background-color: #222; background-repeat: no-repeat; box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+  }
+  .tp-lupa::before, .tp-lupa::after { content: ''; position: absolute; background: rgb(255 255 255 / 0.9); box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4); }
+  .tp-lupa::before { left: 50%; top: 30%; bottom: 30%; width: 1.5px; translate: -50% 0; }
+  .tp-lupa::after { top: 50%; left: 30%; right: 30%; height: 1.5px; translate: 0 -50%; }
+
+  /* Paso 3: aviso, flechas para cambiar de tela */
+  .tp-aviso {
+    display: none; position: absolute; bottom: 0.75rem; left: 50%; translate: -50% 0; z-index: 2; margin: 0; color: var(--ink); width: max-content;
+    align-items: center; gap: 0.6rem; max-width: calc(100% - 1.2rem); padding: 0.4rem 0.45rem 0.4rem 0.9rem; border-radius: 999px;
+    background: color-mix(in oklab, var(--surface) 92%, transparent); backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px -6px rgb(0 0 0 / 0.35); font-size: var(--step--1); line-height: 1.25; pointer-events: none;
+  }
+  .tp-aviso:has(button:not([hidden])) { pointer-events: auto; }
+  .tp-aviso:not(:has(button:not([hidden]))) { padding-right: 0.9rem; }
+  .preview[data-inmersivo] .wall[data-room='foto'][data-foto='lista'] .tp-aviso:not([hidden]) { display: flex; }
+  .tp-flecha {
+    display: none; position: absolute; top: 50%; translate: 0 -50%; z-index: 2; width: 44px; height: 44px; padding: 0; place-items: center;
+    border: 0; border-radius: 50%; cursor: pointer; background: rgb(255 255 255 / 0.85); color: var(--ink); box-shadow: 0 2px 10px rgb(0 0 0 / 0.3);
+  }
+  .tp-flecha svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .tp-flecha-ant { left: 0.6rem; }
+  .tp-flecha-sig { right: 0.6rem; }
+  .preview[data-inmersivo][data-paso='colocar'] .tp-flecha { display: grid; }
+
+  /* —— Pantalla completa —— */
+  :global(html.tp-abierto) { overflow: hidden; }
+  .tp-cabecera, .tp-panel { display: none; }
+  .preview[data-inmersivo] {
+    position: fixed; inset: 0; z-index: 1000; margin: 0; padding: 0; gap: 0; border: 0;
+    height: 100dvh; background: #1b1815; color: #fff;
+    display: grid; grid-template: 'cab' auto 'pared' minmax(0, 1fr) 'panel' auto / minmax(0, 1fr);
+  }
+  .preview[data-inmersivo] .wall { grid-area: pared; aspect-ratio: auto; height: 100%; border-radius: 0; background: #1b1815; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .mi-foto { -webkit-user-drag: none; }
+  .preview[data-inmersivo] :is(.preview-caption, .rooms) { display: none; }
+  .preview[data-inmersivo] .tp-cabecera {
+    grid-area: cab; display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0.5rem 0.5rem var(--gutter);
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+  .tp-titulo { margin: 0; font: 500 var(--step-1) / 1 var(--font-display); white-space: nowrap; }
+  .tp-pasos { display: flex; gap: 0.35rem; margin: 0 auto; padding: 0; list-style: none; font-size: 0.8125rem; }
+  .tp-pasos li { display: flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.65rem 0.3rem 0.35rem; border-radius: 999px; color: rgb(255 255 255 / 0.6); }
+  .tp-pasos span { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%; border: 1px solid currentColor; font-size: 0.75rem; }
+  .tp-pasos li[aria-current] { color: #fff; background: rgb(255 255 255 / 0.12); }
+  .tp-pasos li[aria-current] span { background: #fff; border-color: #fff; color: #1b1815; }
+  .tp-cerrar {
+    width: 44px; height: 44px; flex: none; border: 0; border-radius: 50%; background: transparent; color: #fff;
+    font-size: 1.9rem; line-height: 1; cursor: pointer;
+  }
+  .tp-cerrar:hover { background: rgb(255 255 255 / 0.12); }
+  .tp-cerrar:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
+
+  .preview[data-inmersivo] .tp-panel {
+    grid-area: panel; display: block; overflow-y: auto; max-height: 50dvh;
+    padding: 1.1rem var(--gutter) max(1rem, env(safe-area-inset-bottom));
+    background: var(--surface); color: var(--ink); border-radius: 18px 18px 0 0;
+  }
+  .tp-panel section { display: none; gap: 0.85rem; }
+  .preview[data-paso='foto'] [data-tp-seccion='foto'],
+  .preview[data-paso='medir'] [data-tp-seccion='medir'],
+  .preview[data-paso='colocar'] [data-tp-seccion='colocar'] { display: grid; }
+  .tp-panel h3 { margin: 0; font-size: var(--step-2); }
+  .tp-panel p { margin: 0; }
+  .tp-botones { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .tp-botones > * { flex: 1 1 10rem; justify-content: center; }
+  .tp-botones label { position: relative; cursor: pointer; }
+  .tp-botones label input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .tp-botones label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .tp-consejos summary { cursor: pointer; font-weight: 500; }
+  .tp-consejos ul { margin: 0.6rem 0 0; padding-left: 1.2rem; display: grid; gap: 0.4rem; color: var(--ink-2); font-size: var(--step--1); }
+  .tp-refs, .tp-chips, .tp-tira { display: flex; gap: 0.5rem; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
+  .tp-refs::-webkit-scrollbar, .tp-chips::-webkit-scrollbar, .tp-tira::-webkit-scrollbar { display: none; }
+  .tp-refs .chip, .tp-chips .chip { flex: none; white-space: nowrap; }
+  .tp-cm { display: flex; align-items: center; gap: 0.6rem; font-weight: 500; }
+  .tp-cm input {
+    width: 7rem; min-height: 48px; padding: 0 0.8rem; border: 1px solid var(--rule); border-radius: 12px;
+    background: var(--raised); color: var(--ink); font: 500 1.125rem var(--font-body);
+  }
+  .tp-cm input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+  .tp-abarca { min-height: 1.4em; color: var(--ink-2); font-size: var(--step--1); }
+  .tp-abarca[data-raro] { color: #9b2c1f; font-weight: 500; }
+  .tp-tela { flex: none; width: 3.6rem; height: 3.6rem; padding: 0; border: 0; border-radius: 10px; overflow: hidden; cursor: pointer; background: none; }
+  .tp-tela img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tp-tela[aria-pressed='true'] { outline: 2.5px solid var(--ink); outline-offset: 2px; }
+  .tp-tira { padding-block: 4px; }
+  .tp-acciones .btn { flex: 1 1 8rem; }
+  .tp-enlaces { display: flex; justify-content: center; gap: 1.25rem; }
+  .tp-enlaces button { border: 0; background: none; padding: 0.4rem 0; color: var(--ink-2); font: 400 var(--step--1) var(--font-body); text-decoration: underline; cursor: pointer; }
+
+  @media (min-width: 960px) {
+    .preview[data-inmersivo] { grid-template: 'cab cab' auto 'pared panel' minmax(0, 1fr) / minmax(0, 1fr) 25rem; }
+    .preview[data-inmersivo] .tp-panel { max-height: none; border-radius: 0; padding: 1.75rem; }
+    .tp-refs, .tp-chips, .tp-tira { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; }
+  }
+  @media (max-width: 600px) {
+    .tp-titulo { display: none; }
+    .tp-pasos { margin-left: 0; }
+    .tp-pasos li { padding-right: 0.45rem; }
+    .tp-pasos li:not([aria-current]) { font-size: 0; gap: 0; padding: 0.3rem; }
+    .tp-pasos li:not([aria-current]) span { font-size: 0.75rem; }
+    .tp-cta small { display: none; }
+  }
 
   .rooms[hidden] { display: none; }
   .rooms { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 0.6rem; }

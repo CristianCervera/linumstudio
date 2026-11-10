@@ -24,7 +24,13 @@ if (!api) {
 
 const raiz = new URL('../', import.meta.url);
 type Item = { slug: string };
-type Contenido = { telas: Item[]; trabajos: Item[]; cuadrito: { telas: Item[]; disenos: Item[] }; precios: unknown };
+type Contenido = {
+  telas: Item[];
+  trabajos: Item[];
+  cuadrito: { telas: Item[]; disenos: Item[] };
+  precios: unknown;
+  web?: Record<string, { imagen?: boolean }>;
+};
 
 // Con reintentos: un servicio gratuito de Render tarda hasta un minuto en despertar
 const pedir = async (ruta: string, intentos = 4): Promise<Response> => {
@@ -76,6 +82,19 @@ for (const [dir, items] of carpetas) {
   }
   for (const f of quedan) await rename(new URL(`${dir}/${f}`, tmp), new URL(f, destino));
 }
+// Imágenes sueltas (portada, catálogo, compartir): src/assets/<slug>.jpg. Las que no tienen imagen en el back
+// se quitan si son opcionales (compartir); las demás se dejan como estén en el repositorio.
+for (const [slug, estado] of Object.entries(contenido.web ?? {})) {
+  if (!/^[a-z0-9-]+$/.test(slug)) throw new Error(`Imagen no válida: ${slug}`);
+  const destino = new URL(`src/assets/${slug}.jpg`, raiz);
+  if (estado.imagen) {
+    await writeFile(destino, Buffer.from(await (await pedir(`/media/web/${slug}.jpg`)).arrayBuffer()));
+    hechas++;
+  } else if (slug === 'compartir') {
+    await rm(destino, { force: true });
+  }
+}
+
 await rm(tmp, { recursive: true, force: true });
 await writeFile(new URL('src/data/contenido.json', raiz), JSON.stringify(contenido, null, 2) + '\n');
 console.log(

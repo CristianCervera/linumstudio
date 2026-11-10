@@ -2,11 +2,12 @@
 // Página principal: qué es Linum, los dos productos, el catálogo y dónde vernos
 import { Image } from 'astro:assets';
 import Sitio from '../layouts/Sitio.astro';
-import { contacto, trabajos, telas, telasDestacadas, mosaico, cuadrito, desde, type Producto } from '../data/estudio';
+import { contacto, telas, telasDestacadas, mosaico, cuadrito, desde, encuadre, type Producto } from '../data/estudio';
 import { ui, idiomas, rutaDe, euros, type Lang } from '../i18n/ui';
 import { iconoDescarga } from './iconos';
 import portada from '../assets/catalogo-portada.jpg';
 import fotoTapices from '../assets/portada-tapices.jpg';
+import fotoCuadritos from '../assets/portada-cuadritos.jpg';
 import fs from 'node:fs';
 
 interface Props { lang: Lang }
@@ -23,17 +24,16 @@ const pdfMb = (pdfBytes / 1024 / 1024).toLocaleString(idiomas[lang].intl, { maxi
 
 // Cada producto: foto grande, muestras de lo que se elige (telas o diseños) y su página.
 // El encuadre (pos) deja a la vista las piezas al recortar la foto.
-// Las muestras son las telas destacadas en el panel; la foto de los cuadritos, la primera de sus trabajos.
-const fotoCuadritos = (trabajos.cuadrito.find((x) => x.slug === 'cuadritos-aparador') ?? trabajos.cuadrito[0])?.imagen ?? fotoTapices;
+// Las muestras son las telas destacadas en el panel; las fotos y su encuadre también se cambian allí (Imágenes).
 const muestrasTela = telasDestacadas.slice(0, 6);
 const productos = [
   {
-    id: 'tapiz' as Producto, pagina: 'linum' as const, imagen: fotoTapices, pos: '45% 58%',
+    id: 'tapiz' as Producto, pagina: 'linum' as const, imagen: fotoTapices, pos: encuadre('portada-tapices', '45% 58%'),
     cuenta: `${telas.length} ${t.hero.telas}`,
     muestras: muestrasTela.map((x) => ({ slug: x.slug, nombre: x.nombre, imagen: x.imagen, href: `${rutaDe(lang, 'linum')}?tela=${x.slug}#configurador` })),
   },
   {
-    id: 'cuadrito' as Producto, pagina: 'cuadritos' as const, imagen: fotoCuadritos, pos: '50% 50%',
+    id: 'cuadrito' as Producto, pagina: 'cuadritos' as const, imagen: fotoCuadritos, pos: encuadre('portada-cuadritos', '50% 50%'),
     cuenta: `${cuadrito.disenos.length} ${t.hero.disenos}`,
     muestras: cuadrito.disenos.map((d) => ({ slug: d.slug, nombre: t.config.cuadrito.disenos[d.slug], imagen: d.imagen, href: `${rutaDe(lang, 'cuadritos')}?diseno=${d.slug}#configurador` })),
   },

@@ -10,7 +10,7 @@ npm run build    # genera dist/
 
 ## Panel de contenido (`/admin/`)
 
-En `/admin/` hay un panel con usuario y contraseña para gestionar los ejemplos (fotos de trabajos), las telas de tapiz, las telas y los diseños de los cuadritos y los precios, traer las fotos nuevas de Instagram y publicar la web. Habla con el back, [linumstudio-back](https://github.com/cristiancervera/linumstudio-back), que guarda el contenido y las imágenes (su README explica cómo montarlo y cómo conseguir el token de Instagram).
+En `/admin/` hay un panel con usuario y contraseña para gestionar los ejemplos (fotos de trabajos), las telas de tapiz, las telas y los diseños de los cuadritos, las imágenes sueltas de la web y los precios, traer las fotos nuevas de Instagram y publicar la web. Habla con el back, [linumstudio-back](https://github.com/cristiancervera/linumstudio-back), que guarda el contenido y las imágenes (su README explica cómo montarlo y cómo conseguir el token de Instagram).
 
 - `PUBLIC_LINUM_API_URL`: dirección del back que usa el panel. Si no está, `http://localhost:3001` con `npm run dev` y `https://linumstudio-back.onrender.com` en la web publicada.
 - `LINUM_API_URL`: si está definida, `npm run build` descarga antes el contenido del back (`npm run contenido`) a `src/data/contenido.json` y `src/assets/`, y la web se construye con él. Sin ella se usa lo que haya en el repositorio. En el build de producción tienen que estar las dos.
@@ -23,6 +23,7 @@ Para trabajar en local con el panel: arranca el back (`npm start` en linumstudio
 ## Dónde está cada cosa
 
 - `src/data/contenido.json`: lo que se gestiona desde el panel: telas, fotos de trabajos (con su producto y sus textos en los cuatro idiomas), telas y diseños de cuadrito (con sus nombres) y precios. Lo que tiene `visible: false` no sale. Si la web se gestiona desde el back, no lo edites a mano: `npm run contenido` lo sobrescribe.
+- Imágenes sueltas (pestaña *Imágenes* del panel): `src/assets/portada-tapices.jpg`, `portada-cuadritos.jpg`, `catalogo-portada.jpg` y, si se sube, `compartir.jpg` (la de `og.jpg`; sin ella se hace con tres trabajos). Su estado y el encuadre de las dos fotos de producto están en `web` de `contenido.json`. Las fotos de `src/assets/estancias/` no se cambian desde el panel: el simulador las usa medidas en píxeles (`src/data/estancias.ts`).
 - `src/data/estudio.ts`: lee `contenido.json` y le añade las imágenes; además, contacto y marcos.
 - `src/i18n/ui.ts`: todos los textos en español, inglés, alemán y francés (los de las fotos y los nombres de cuadrito salen de `contenido.json`). El español vive en `/` y el resto en `/en/`, `/de/` y `/fr/` (por ejemplo, `/en/cuadritos/`); las rutas salen de `rutaDe(lang, pagina)`.
 - `src/components/Inicio.astro`: la página principal (cabecera con fotos, los dos productos, catálogo y visita).

@@ -105,5 +105,14 @@ export const desde: Record<Producto, number> = {
   cuadrito: Math.min(...cuadrito.impresiones.map((i) => i.precio)),
 };
 
+/**
+ * Imágenes sueltas que se cambian desde el panel (src/assets/<slug>.jpg) y, en las que se recortan, el punto
+ * que queda en el centro. `compartir` es opcional: sin ella, og.jpg se hace con tres fotos de trabajos.
+ */
+type Web = Partial<Record<string, { imagen?: boolean; pos?: string }>>;
+const web = ((contenido as { web?: Web }).web ?? {}) as Web;
+export const encuadre = (slug: string, porDefecto: string) => web[slug]?.pos ?? porDefecto;
+export const hayImagenWeb = (slug: string) => web[slug]?.imagen === true;
+
 /** Todas las fotos de trabajos visibles (también las que no son de ningún producto), para el mosaico de la cabecera. */
 export const mosaico = [...trabajosVisibles].sort((a, b) => a.slug.localeCompare(b.slug)).map((t) => t.imagen);

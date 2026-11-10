@@ -948,5 +948,21 @@
       "papel": 20,
       "tela": 25
     }
+  },
+  "web": {
+    "portada-tapices": {
+      "imagen": true,
+      "pos": "45% 58%"
+    },
+    "portada-cuadritos": {
+      "imagen": true,
+      "pos": "50% 50%"
+    },
+    "catalogo-portada": {
+      "imagen": true
+    },
+    "compartir": {
+      "imagen": false
+    }
   }
 }

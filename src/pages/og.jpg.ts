@@ -13,6 +13,12 @@ const fotos = [...preferidas.filter((s) => disponibles.includes(s)), ...disponib
 const OG = { ancho: 1200, alto: 630, fotos };
 
 export const GET: APIRoute = async () => {
+  // Si en el panel se ha subido una imagen para compartir, se usa esa
+  const propia = 'src/assets/compartir.jpg';
+  if ((contenido as { web?: { compartir?: { imagen?: boolean } } }).web?.compartir?.imagen && existsSync(propia)) {
+    const jpg = await sharp(propia).resize(OG.ancho, OG.alto, { fit: 'cover' }).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+    return new Response(new Uint8Array(jpg), { headers: { 'Content-Type': 'image/jpeg' } });
+  }
   const hueco = 6;
   const ancho = (OG.ancho - hueco * (OG.fotos.length - 1)) / OG.fotos.length;
   const piezas = await Promise.all(

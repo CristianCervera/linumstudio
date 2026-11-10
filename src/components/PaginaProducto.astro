@@ -5,7 +5,7 @@ import Sitio from '../layouts/Sitio.astro';
 import Galeria from './Galeria.astro';
 import Configurador from './Configurador.astro';
 import Precios from './Precios.astro';
-import { telas, marcos, cuadrito, desde, trabajos, type Producto } from '../data/estudio';
+import { telas, telasDestacadas, marcos, cuadrito, desde, trabajos, type Producto } from '../data/estudio';
 import fotoTapices from '../assets/portada-tapices.jpg';
 import type { ImageMetadata } from 'astro';
 import { ui, rutaDe, euros, type Lang } from '../i18n/ui';
@@ -28,14 +28,15 @@ const fotos: Pieza[] = [
 const maderas = marcos.filter((m) => m.color).map((m) => m.color!);
 const muestras: Pieza[] =
   producto === 'tapiz'
-    ? ['tanger', 'osaka', 'habana', 'granada', 'katmandu', 'cadiz', 'bogota'].map((slug, i) => ({
-        tipo: 'tela' as const, imagen: telas.find((x) => x.slug === slug)!.imagen, madera: maderas[i % maderas.length],
-      }))
-    : ([['flores-verdes', 'madre'], ['rayas-teja', 'sagrado-corazon'], ['hojas-malva', 'desamparados'], ['ramitas-mostaza', 'pilar'], ['granadas', 'sagrado-corazon'], ['rayas-azules', 'desamparados']] as const).map(([tl, d]) => ({
-        tipo: 'cuadrito' as const,
-        tela: cuadrito.telas.find((x) => x.slug === tl)!.imagen,
-        diseno: cuadrito.disenos.find((x) => x.slug === d)!.imagen,
-      }));
+    ? telasDestacadas.map((tela, i) => ({ tipo: 'tela' as const, imagen: tela.imagen, madera: maderas[i % maderas.length] }))
+    : // Cada tela de fondo con un diseño distinto
+      cuadrito.disenos.length
+      ? cuadrito.telas.map((tela, i) => ({
+          tipo: 'cuadrito' as const,
+          tela: tela.imagen,
+          diseno: cuadrito.disenos[(i + 2) % cuadrito.disenos.length].imagen,
+        }))
+      : [];
 // Se intercalan: una muestra cada dos fotos (o cada foto, si hay pocas)
 const cada = fotos.length > muestras.length * 1.5 ? 2 : 1;
 const piezas: Pieza[] = [];

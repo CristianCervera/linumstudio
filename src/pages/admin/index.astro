@@ -1,0 +1,886 @@
+---
+// Panel de contenido: entra con usuario y contraseña del back (linumstudio-back) y gestiona los ejemplos (fotos de
+// trabajos), las telas, las telas de fondo y los diseños de los cuadritos y los precios. También trae las fotos nuevas
+// de Instagram y publica la web (el back llama al deploy hook y el build descarga el contenido con `npm run contenido`).
+// La página es estática: todo se hace en el navegador contra la API de PUBLIC_LINUM_API_URL.
+const api = (import.meta.env.PUBLIC_LINUM_API_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Panel · Linum Estudio</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body data-api={api}>
+    <!-- Login -->
+    <main id="login" class="login" hidden>
+      <form class="tarjeta login-form" id="login-form">
+        <p class="eyebrow">Linum Estudio</p>
+        <h1>Panel de contenido</h1>
+        <label>Usuario <input name="usuario" autocomplete="username" required /></label>
+        <label>Contraseña <input name="password" type="password" autocomplete="current-password" required /></label>
+        <p class="error" id="login-error" role="alert"></p>
+        <button class="btn btn-primario" type="submit">Entrar</button>
+      </form>
+    </main>
+
+    <!-- Panel -->
+    <div id="panel" hidden>
+      <header class="barra">
+        <div class="barra-marca">
+          <strong>Linum Estudio</strong> <span>Panel</span>
+        </div>
+        <div class="barra-acciones">
+          <span class="estado" id="estado" hidden>Cambios sin publicar</span>
+          <button class="btn" type="button" id="btn-instagram" title="Trae las fotos nuevas de la cuenta de Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg>
+            Sincronizar con Instagram
+          </button>
+          <button class="btn btn-primario" type="button" id="btn-publicar">Publicar web</button>
+          <details class="menu">
+            <summary class="btn btn-sutil" id="usuario">Cuenta</summary>
+            <div class="menu-lista">
+              <button type="button" id="btn-password">Cambiar contraseña</button>
+              <a href="/" target="_blank" rel="noopener">Ver la web ↗</a>
+              <button type="button" id="btn-salir">Salir</button>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <nav class="pestanas" aria-label="Secciones">
+        <button type="button" data-pestana="trabajos" aria-current="page">Ejemplos</button>
+        <button type="button" data-pestana="telas">Telas de tapiz</button>
+        <button type="button" data-pestana="cuadrito-telas">Telas de cuadrito</button>
+        <button type="button" data-pestana="disenos">Diseños</button>
+        <button type="button" data-pestana="precios">Precios</button>
+      </nav>
+
+      <main class="contenido">
+        <section id="vista-coleccion">
+          <div class="cabecera">
+            <div>
+              <h1 id="col-titulo"></h1>
+              <p class="ayuda" id="col-ayuda"></p>
+            </div>
+            <button class="btn btn-primario" type="button" id="btn-anadir">Añadir</button>
+          </div>
+          <div class="filtros" id="filtros" hidden></div>
+          <ul class="rejilla" id="rejilla"></ul>
+          <p class="vacio" id="vacio" hidden>No hay nada aquí todavía.</p>
+        </section>
+
+        <section id="vista-precios" hidden>
+          <div class="cabecera">
+            <div>
+              <h1>Precios</h1>
+              <p class="ayuda">Las medidas de tapiz se escriben alto × ancho en centímetros. Las que tienen el mismo precio salen juntas en la tabla de precios.</p>
+            </div>
+          </div>
+          <form id="form-precios" class="tarjeta precios">
+            <h2>Tapices Linum</h2>
+            <table>
+              <thead><tr><th>Alto (cm)</th><th>Ancho (cm)</th><th>Precio (€)</th><th><span class="oculto">Quitar</span></th></tr></thead>
+              <tbody id="tamanos"></tbody>
+            </table>
+            <button class="btn btn-sutil" type="button" id="btn-tamano">+ Añadir medida</button>
+            <div class="campos-fila">
+              <label>Enmarcado (€) <input type="number" name="enmarcado" min="0" step="1" required /></label>
+              <label>Descuento del díptico (%) <input type="number" name="diptico" min="0" max="100" step="1" required /></label>
+            </div>
+            <h2>Cuadritos</h2>
+            <div class="campos-fila">
+              <label>Impresión en papel (€) <input type="number" name="papel" min="0" step="1" required /></label>
+              <label>Impresión en tela (€) <input type="number" name="tela" min="0" step="1" required /></label>
+            </div>
+            <div><button class="btn btn-primario" type="submit">Guardar precios</button></div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <!-- Editor de un elemento -->
+    <dialog id="editor" class="dialogo">
+      <form id="form-editor" method="dialog">
+        <header class="dialogo-cabecera">
+          <h2 id="editor-titulo"></h2>
+          <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+        </header>
+        <div class="dialogo-cuerpo">
+          <div class="editor-imagen">
+            <img id="editor-preview" alt="" />
+            <label class="btn btn-sutil subir">
+              <span id="editor-imagen-texto">Elegir imagen</span>
+              <input type="file" name="imagen" accept="image/*" hidden />
+            </label>
+            <p class="ayuda" id="editor-imagen-ayuda"></p>
+          </div>
+          <div class="editor-campos" id="editor-campos"></div>
+        </div>
+        <p class="error" id="editor-error" role="alert"></p>
+        <footer class="dialogo-pie">
+          <button type="button" class="btn btn-sutil" data-cerrar>Cancelar</button>
+          <button type="submit" class="btn btn-primario" value="guardar">Guardar</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <!-- Cambiar contraseña -->
+    <dialog id="dialogo-password" class="dialogo dialogo-pequeno">
+      <form id="form-password" method="dialog">
+        <header class="dialogo-cabecera">
+          <h2>Cambiar contraseña</h2>
+          <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+        </header>
+        <div class="dialogo-cuerpo una-columna">
+          <label>Contraseña actual <input type="password" name="actual" autocomplete="current-password" required /></label>
+          <label>Nueva contraseña (8 caracteres o más) <input type="password" name="nueva" minlength="8" autocomplete="new-password" required /></label>
+        </div>
+        <p class="error" role="alert"></p>
+        <footer class="dialogo-pie">
+          <button type="button" class="btn btn-sutil" data-cerrar>Cancelar</button>
+          <button type="submit" class="btn btn-primario" value="guardar">Guardar</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+    <script>
+      type Lang = 'es' | 'en' | 'de' | 'fr';
+      type Textos<T> = Record<Lang, T>;
+      type Item = { slug: string; visible?: boolean; [k: string]: any };
+      type Trabajo = Item & {
+        producto: 'tapiz' | 'cuadrito' | null;
+        textos: Textos<{ alt: string; pie: string }>;
+        instagram?: { id: string; permalink: string | null; caption: string; fecha: string | null };
+      };
+      type Contenido = {
+        telas: Item[];
+        trabajos: Trabajo[];
+        cuadrito: { telas: Item[]; disenos: Item[] };
+        precios: { tamanos: { ancho: number; alto: number; precio: number }[]; enmarcado: number; diptico: number; impresiones: { papel: number; tela: number } };
+      };
+      type ColId = 'trabajos' | 'telas' | 'cuadrito-telas' | 'disenos';
+
+      const API = document.body.dataset.api!;
+      const LANGS: Lang[] = ['es', 'en', 'de', 'fr'];
+      const NOMBRE_LANG: Record<Lang, string> = { es: 'Español', en: 'Inglés', de: 'Alemán', fr: 'Francés' };
+      const $ = <T extends HTMLElement = HTMLElement>(sel: string, raiz: ParentNode = document) => raiz.querySelector(sel) as T;
+
+      // ── Sesión ──
+      const almacen = {
+        get: () => { try { return sessionStorage.getItem('linum-token'); } catch { return null; } },
+        set: (t: string | null) => { try { t ? sessionStorage.setItem('linum-token', t) : sessionStorage.removeItem('linum-token'); } catch {} },
+      };
+      let token = almacen.get();
+
+      class ErrorApi extends Error {}
+      async function api<T = any>(ruta: string, opciones: { metodo?: string; json?: unknown; form?: FormData } = {}): Promise<T> {
+        const headers: Record<string, string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
+        if (opciones.json !== undefined) headers['Content-Type'] = 'application/json';
+        let r: Response;
+        try {
+          r = await fetch(API + ruta, {
+            method: opciones.metodo ?? 'GET',
+            headers,
+            body: opciones.json !== undefined ? JSON.stringify(opciones.json) : opciones.form,
+          });
+        } catch {
+          throw new ErrorApi(`No se puede conectar con el servidor (${API}).`);
+        }
+        const datos = await r.json().catch(() => ({}));
+        if (r.status === 401 && ruta !== '/api/login') {
+          salir();
+          throw new ErrorApi(datos.error ?? 'Sesión caducada');
+        }
+        if (!r.ok) throw new ErrorApi(datos.error ?? `Error ${r.status}`);
+        return datos as T;
+      }
+
+      // ── Avisos ──
+      let temporizador: number | undefined;
+      function avisar(texto: string, tipo: 'ok' | 'error' = 'ok', ms = 4500) {
+        const a = $('#aviso');
+        a.textContent = texto;
+        a.dataset.tipo = tipo;
+        a.dataset.visible = '';
+        clearTimeout(temporizador);
+        temporizador = window.setTimeout(() => delete a.dataset.visible, ms);
+      }
+      const mensajeDe = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+      // ── Estado ──
+      let contenido: Contenido;
+      let pestana: ColId | 'precios' = 'trabajos';
+      let filtro = 'todas';
+      const version = new Map<string, number>(); // para recargar la miniatura de una imagen cambiada
+      const inicio = Date.now();
+
+      const COLS: Record<ColId, {
+        titulo: string; ayuda: string; carpeta: string; singular: string; lista: () => Item[];
+        tituloDe: (x: any) => string; etiquetas: (x: any) => string[]; imagenAyuda: string; proporcion: string;
+      }> = {
+        trabajos: {
+          titulo: 'Ejemplos', singular: 'foto de trabajo', carpeta: 'trabajos', lista: () => contenido.trabajos,
+          ayuda: 'Fotos de piezas ya colgadas. Las de cada producto salen en su galería en este orden; todas las visibles salen además en el mosaico de la portada.',
+          tituloDe: (x: Trabajo) => x.textos?.es?.pie || (x.instagram ? 'Foto de Instagram' : x.slug),
+          etiquetas: (x: Trabajo) => [
+            x.producto === 'tapiz' ? 'Tapices' : x.producto === 'cuadrito' ? 'Cuadritos' : 'Solo portada',
+            ...(x.instagram ? ['Instagram'] : []),
+            ...(esPendiente(x) ? ['Pendiente'] : []),
+          ],
+          imagenAyuda: 'JPG, PNG o WebP. Se guarda a 1600 px como máximo, sin recortar.',
+          proporcion: 'auto',
+        },
+        telas: {
+          titulo: 'Telas de tapiz', singular: 'tela', carpeta: 'telas', lista: () => contenido.telas,
+          ayuda: 'Las telas del simulador de tapices, en este orden. Las destacadas salen de muestra en la portada y en la cabecera de los tapices.',
+          tituloDe: (x) => x.nombre,
+          etiquetas: (x) => [x.familia === 'ikat' ? 'Ikat' : 'Floral', ...(x.nueva ? ['Nueva'] : []), ...(x.destacada ? ['Destacada'] : [])],
+          imagenAyuda: 'Una muestra de la tela. Se recorta en cuadrado (1200 × 1200).',
+          proporcion: '1',
+        },
+        'cuadrito-telas': {
+          titulo: 'Telas de cuadrito', singular: 'tela de fondo', carpeta: 'cuadritos/telas', lista: () => contenido.cuadrito.telas,
+          ayuda: 'Las telas de fondo de los cuadritos, en este orden.',
+          tituloDe: (x) => x.nombres?.es || x.slug, etiquetas: () => [],
+          imagenAyuda: 'Se recorta en vertical, en la proporción del cuadrito (20 × 27).',
+          proporcion: '20 / 27',
+        },
+        disenos: {
+          titulo: 'Diseños', singular: 'diseño', carpeta: 'cuadritos/disenos', lista: () => contenido.cuadrito.disenos,
+          ayuda: 'Los dibujos que se imprimen en la lámina del cuadrito. Sube el diseño original sobre fondo claro.',
+          tituloDe: (x) => x.nombres?.es || x.slug, etiquetas: () => [],
+          imagenAyuda: 'El dibujo entero sobre fondo claro; no se recorta.',
+          proporcion: '3 / 4',
+        },
+      };
+
+      const esPendiente = (x: Trabajo) => Boolean(x.instagram) && !x.visible && !x.producto;
+      const urlImagen = (col: ColId, slug: string) =>
+        `${API}/media/${COLS[col].carpeta}/${slug}.jpg?v=${version.get(`${col}/${slug}`) ?? inicio}`;
+
+      // ── Login ──
+      async function entrar() {
+        try {
+          const { usuario } = await api<{ usuario: string }>('/api/admin/sesion');
+          $('#usuario').textContent = usuario;
+          $('#login').hidden = true;
+          $('#panel').hidden = false;
+          await cargar();
+        } catch (e) {
+          if (!(e instanceof ErrorApi) || token) avisar(mensajeDe(e), 'error');
+          mostrarLogin();
+        }
+      }
+      function mostrarLogin() {
+        $('#panel').hidden = true;
+        $('#login').hidden = false;
+        $<HTMLInputElement>('#login-form [name=usuario]').focus();
+      }
+      function salir() {
+        token = null;
+        almacen.set(null);
+        mostrarLogin();
+      }
+      $('#login-form').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const f = ev.currentTarget as HTMLFormElement;
+        const datos = Object.fromEntries(new FormData(f));
+        const error = $('#login-error');
+        error.textContent = '';
+        const boton = $<HTMLButtonElement>('button', f);
+        boton.disabled = true;
+        try {
+          const r = await api<{ token: string }>('/api/login', { metodo: 'POST', json: datos });
+          token = r.token;
+          almacen.set(token);
+          f.reset();
+          await entrar();
+        } catch (e) {
+          error.textContent = mensajeDe(e);
+        } finally {
+          boton.disabled = false;
+        }
+      });
+      $('#btn-salir').addEventListener('click', salir);
+
+      // ── Carga y estado de publicación ──
+      async function cargar() {
+        contenido = await api<Contenido>('/api/admin/contenido');
+        pintar();
+        await refrescarEstado();
+      }
+      let publicarConfigurado = false;
+      async function refrescarEstado() {
+        try {
+          const e = await api('/api/admin/estado');
+          $('#estado').hidden = !e.cambiosSinPublicar;
+          publicarConfigurado = e.publicarConfigurado;
+          const pub = $<HTMLButtonElement>('#btn-publicar');
+          pub.title = publicarConfigurado
+            ? `Reconstruye la web con los cambios${e.ultimaPublicacion ? ` (última: ${new Date(e.ultimaPublicacion).toLocaleString('es-ES')})` : ''}`
+            : 'Falta configurar DEPLOY_HOOK_URL en el back';
+          const ig = $<HTMLButtonElement>('#btn-instagram');
+          ig.title = e.instagram.configurado
+            ? `Trae las fotos nuevas de Instagram${e.instagram.ultimaSincronizacion ? ` (última vez: ${new Date(e.instagram.ultimaSincronizacion).toLocaleString('es-ES')})` : ''}`
+            : 'Falta configurar INSTAGRAM_TOKEN en el back';
+        } catch {}
+      }
+
+      // ── Pestañas ──
+      document.querySelectorAll<HTMLButtonElement>('[data-pestana]').forEach((b) =>
+        b.addEventListener('click', () => {
+          pestana = b.dataset.pestana as typeof pestana;
+          filtro = 'todas';
+          pintar();
+        })
+      );
+
+      function pintar() {
+        document.querySelectorAll<HTMLButtonElement>('[data-pestana]').forEach((b) =>
+          b.dataset.pestana === pestana ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')
+        );
+        $('#vista-precios').hidden = pestana !== 'precios';
+        $('#vista-coleccion').hidden = pestana === 'precios';
+        if (pestana === 'precios') pintarPrecios();
+        else pintarColeccion(pestana);
+      }
+
+      // ── Colecciones ──
+      const FILTROS: [string, string, (x: Trabajo) => boolean][] = [
+        ['todas', 'Todas', () => true],
+        ['pendientes', 'Pendientes de Instagram', esPendiente],
+        ['tapiz', 'Tapices', (x) => x.producto === 'tapiz'],
+        ['cuadrito', 'Cuadritos', (x) => x.producto === 'cuadrito'],
+        ['portada', 'Solo portada', (x) => !x.producto],
+        ['ocultas', 'Ocultas', (x) => !x.visible],
+      ];
+
+      function elementosVisibles(col: ColId) {
+        const lista = COLS[col].lista();
+        if (col !== 'trabajos') return lista;
+        const f = FILTROS.find(([id]) => id === filtro)!;
+        return (lista as Trabajo[]).filter(f[2]);
+      }
+
+      function pintarColeccion(col: ColId) {
+        const def = COLS[col];
+        $('#col-titulo').textContent = def.titulo;
+        $('#col-ayuda').textContent = def.ayuda;
+        $('#btn-anadir').textContent = `Añadir ${def.singular}`;
+
+        const filtros = $('#filtros');
+        filtros.hidden = col !== 'trabajos';
+        filtros.replaceChildren(
+          ...FILTROS.map(([id, nombre, fn]) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            const n = contenido.trabajos.filter(fn).length;
+            b.textContent = `${nombre} · ${n}`;
+            if (id === filtro) b.setAttribute('aria-pressed', 'true');
+            if (id === 'pendientes' && n) b.dataset.alerta = '';
+            b.addEventListener('click', () => { filtro = id; pintarColeccion(col); });
+            return b;
+          })
+        );
+
+        const items = elementosVisibles(col);
+        $('#vacio').hidden = items.length > 0;
+        $('#rejilla').replaceChildren(
+          ...items.map((x, i) => {
+            const li = document.createElement('li');
+            li.className = 'tarjeta item';
+            if (x.visible === false) li.dataset.oculto = '';
+            if (col === 'trabajos' && esPendiente(x as Trabajo)) li.dataset.pendiente = '';
+            const img = document.createElement('img');
+            img.src = urlImagen(col, x.slug);
+            img.alt = '';
+            img.loading = 'lazy';
+            img.style.aspectRatio = def.proporcion;
+            const cuerpo = document.createElement('div');
+            cuerpo.className = 'item-cuerpo';
+            const titulo = document.createElement('strong');
+            titulo.textContent = def.tituloDe(x);
+            const etiquetas = document.createElement('div');
+            etiquetas.className = 'etiquetas';
+            for (const e of [...(x.visible === false ? ['Oculta'] : []), ...def.etiquetas(x)]) {
+              const s = document.createElement('span');
+              s.textContent = e;
+              s.dataset.etiqueta = e;
+              etiquetas.append(s);
+            }
+            const acciones = document.createElement('div');
+            acciones.className = 'item-acciones';
+            const boton = (texto: string, titulo: string, fn: () => void, deshabilitado = false) => {
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.textContent = texto;
+              b.title = titulo;
+              b.setAttribute('aria-label', `${titulo}: ${def.tituloDe(x)}`);
+              b.disabled = deshabilitado;
+              b.addEventListener('click', fn);
+              return b;
+            };
+            acciones.append(
+              boton('↑', 'Subir', () => mover(col, x.slug, -1), i === 0),
+              boton('↓', 'Bajar', () => mover(col, x.slug, 1), i === items.length - 1),
+              boton(x.visible === false ? 'Mostrar' : 'Ocultar', x.visible === false ? 'Mostrar en la web' : 'Ocultar de la web', () => alternarVisible(col, x)),
+              boton('Editar', 'Editar', () => abrirEditor(col, x)),
+              boton('Borrar', 'Borrar', () => borrar(col, x))
+            );
+            cuerpo.append(titulo, etiquetas, acciones);
+            li.append(img, cuerpo);
+            return li;
+          })
+        );
+      }
+
+      async function guardando<T>(fn: () => Promise<T>, ok?: string) {
+        try {
+          const r = await fn();
+          if (ok) avisar(ok);
+          return r;
+        } catch (e) {
+          avisar(mensajeDe(e), 'error', 7000);
+          throw e;
+        } finally {
+          refrescarEstado();
+        }
+      }
+
+      async function mover(col: ColId, slug: string, paso: number) {
+        // Se intercambia con el vecino de la vista actual (con filtro, el vecino visible)
+        const lista = COLS[col].lista();
+        const vista = elementosVisibles(col);
+        const j = vista.findIndex((x) => x.slug === slug) + paso;
+        if (j < 0 || j >= vista.length) return;
+        const a = lista.findIndex((x) => x.slug === slug);
+        const b = lista.findIndex((x) => x.slug === vista[j].slug);
+        [lista[a], lista[b]] = [lista[b], lista[a]];
+        pintar();
+        await guardando(() => api(`/api/admin/${col}`, { metodo: 'PUT', json: { orden: lista.map((x) => x.slug) } })).catch(cargar);
+      }
+
+      async function alternarVisible(col: ColId, x: Item) {
+        try {
+          const r = await guardando(() => api(`/api/admin/${col}/${x.slug}`, { metodo: 'PATCH', json: { visible: x.visible === false } }));
+          Object.assign(x, r);
+          pintar();
+        } catch (e) {
+          // Una foto de Instagram sin pie no se puede mostrar en una galería: se abre para completarla
+          if (col === 'trabajos' && (x as Trabajo).producto && !(x as Trabajo).textos?.es?.alt) abrirEditor(col, x);
+        }
+      }
+
+      async function borrar(col: ColId, x: Item) {
+        const nombre = COLS[col].tituloDe(x);
+        const extra = col === 'trabajos' && (x as Trabajo).instagram ? '\nNo se volverá a traer de Instagram.' : '';
+        if (!confirm(`¿Borrar «${nombre}»? Se borra también su imagen.${extra}`)) return;
+        await guardando(() => api(`/api/admin/${col}/${x.slug}`, { metodo: 'DELETE' }), `«${nombre}» borrada`);
+        const lista = COLS[col].lista();
+        lista.splice(lista.indexOf(x), 1);
+        pintar();
+      }
+
+      // ── Editor ──
+      const editor = $<HTMLDialogElement>('#editor');
+      const formEditor = $<HTMLFormElement>('#form-editor');
+      let editando: { col: ColId; item: Item | null } = { col: 'trabajos', item: null };
+      let previewUrl: string | null = null;
+
+      const campo = (html: string) => {
+        const t = document.createElement('template');
+        t.innerHTML = html.trim();
+        return t.content;
+      };
+      const attr = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      const marcado = (b: unknown) => (b ? 'checked' : '');
+      const casilla = (name: string, texto: string, on: unknown) =>
+        `<label class="casilla"><input type="checkbox" name="${name}" ${marcado(on)} /> ${texto}</label>`;
+      const nombresIdiomas = (nombres: Partial<Textos<string>> = {}) =>
+        LANGS.map((l) => `<label>Nombre en ${NOMBRE_LANG[l].toLowerCase()}${l === 'es' ? ' *' : ''}
+          <input name="nombre-${l}" value="${attr(nombres[l])}" ${l === 'es' ? 'required' : ''} maxlength="120" /></label>`).join('');
+
+      function camposDe(col: ColId, x: any) {
+        if (col === 'telas') {
+          return `
+            <label>Nombre * <input name="nombre" value="${attr(x?.nombre)}" required maxlength="60" /></label>
+            <label>Familia
+              <select name="familia">
+                <option value="ikat" ${x?.familia === 'ikat' ? 'selected' : ''}>Ikat y geométricos</option>
+                <option value="floral" ${x?.familia === 'floral' ? 'selected' : ''}>Florales y chinoiserie</option>
+              </select></label>
+            ${casilla('nueva', 'Marcar como nueva', x?.nueva)}
+            ${casilla('destacada', 'Destacada (sale de muestra en la portada)', x?.destacada)}
+            ${casilla('visible', 'Mostrar en la web', x ? x.visible !== false : true)}`;
+        }
+        if (col === 'trabajos') {
+          const t: Trabajo | null = x;
+          const ig = t?.instagram
+            ? `<div class="instagram">
+                 <p><strong>De Instagram</strong>${t.instagram.fecha ? ` · ${new Date(t.instagram.fecha).toLocaleDateString('es-ES')}` : ''}
+                 ${t.instagram.permalink ? ` · <a href="${attr(t.instagram.permalink)}" target="_blank" rel="noopener">ver publicación ↗</a>` : ''}</p>
+                 ${t.instagram.caption ? `<p class="caption">${attr(t.instagram.caption)}</p>` : ''}
+               </div>`
+            : '';
+          const textos = (l: Lang) => `
+            <label>Pie de foto <input name="pie-${l}" value="${attr(t?.textos?.[l]?.pie)}" maxlength="80" placeholder="Granada en un recibidor" /></label>
+            <label>Descripción para quien no ve la foto (alt)${l === 'es' ? ' *' : ''}
+              <textarea name="alt-${l}" rows="2" maxlength="300" placeholder="Tapiz de ikat rojo enmarcado en madera natural en un recibidor blanco">${attr(t?.textos?.[l]?.alt)}</textarea></label>`;
+          return `
+            ${ig}
+            <label>Dónde sale
+              <select name="producto">
+                <option value="tapiz" ${t?.producto === 'tapiz' ? 'selected' : ''}>Galería de tapices Linum</option>
+                <option value="cuadrito" ${t?.producto === 'cuadrito' ? 'selected' : ''}>Galería de cuadritos</option>
+                <option value="" ${t && !t.producto ? 'selected' : ''}>Solo en el mosaico de la portada</option>
+              </select></label>
+            ${casilla('visible', 'Mostrar en la web', t ? t.visible !== false : true)}
+            <fieldset><legend>Español</legend>${textos('es')}</fieldset>
+            ${LANGS.slice(1).map((l) => `<details><summary>${NOMBRE_LANG[l]}</summary>${textos(l)}</details>`).join('')}
+            <p class="ayuda">Si un idioma se deja vacío, se usa el texto en español.</p>`;
+        }
+        return `${nombresIdiomas(x?.nombres)}${casilla('visible', 'Mostrar en la web', x ? x.visible !== false : true)}`;
+      }
+
+      function abrirEditor(col: ColId, item: Item | null) {
+        editando = { col, item };
+        const def = COLS[col];
+        $('#editor-titulo').textContent = item ? `Editar ${def.singular}` : `Añadir ${def.singular}`;
+        $('#editor-campos').replaceChildren(campo(camposDe(col, item)));
+        $('#editor-error').textContent = '';
+        $('#editor-imagen-ayuda').textContent = def.imagenAyuda;
+        $('#editor-imagen-texto').textContent = item ? 'Cambiar imagen' : 'Elegir imagen';
+        const input = $<HTMLInputElement>('input[name=imagen]', formEditor);
+        input.value = '';
+        input.required = !item;
+        const preview = $<HTMLImageElement>('#editor-preview');
+        preview.style.aspectRatio = def.proporcion;
+        preview.hidden = !item;
+        if (item) preview.src = urlImagen(col, item.slug);
+        else preview.removeAttribute('src');
+        editor.showModal();
+      }
+
+      $<HTMLInputElement>('input[name=imagen]', formEditor).addEventListener('change', (ev) => {
+        const f = (ev.currentTarget as HTMLInputElement).files?.[0];
+        if (!f) return;
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(f);
+        const preview = $<HTMLImageElement>('#editor-preview');
+        preview.src = previewUrl;
+        preview.hidden = false;
+      });
+
+      function datosDelEditor(col: ColId): Record<string, unknown> {
+        const fd = new FormData(formEditor);
+        const v = (k: string) => String(fd.get(k) ?? '').trim();
+        const on = (k: string) => fd.get(k) === 'on';
+        if (col === 'telas') return { nombre: v('nombre'), familia: v('familia'), nueva: on('nueva'), destacada: on('destacada'), visible: on('visible') };
+        if (col === 'trabajos') {
+          return {
+            producto: v('producto') || null,
+            visible: on('visible'),
+            textos: Object.fromEntries(LANGS.map((l) => [l, { alt: v(`alt-${l}`), pie: v(`pie-${l}`) }])),
+          };
+        }
+        return { nombres: Object.fromEntries(LANGS.map((l) => [l, v(`nombre-${l}`)])), visible: on('visible') };
+      }
+
+      formEditor.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const { col, item } = editando;
+        const datos = datosDelEditor(col);
+        const archivo = $<HTMLInputElement>('input[name=imagen]', formEditor).files?.[0];
+        const error = $('#editor-error');
+        error.textContent = '';
+        if (col === 'trabajos' && datos.visible && datos.producto && !(datos.textos as any).es.alt) {
+          error.textContent = 'Para mostrar la foto en una galería, escribe su descripción en español.';
+          return;
+        }
+        const boton = $<HTMLButtonElement>('button[type=submit]', formEditor);
+        boton.disabled = true;
+        try {
+          const lista = COLS[col].lista();
+          if (item) {
+            const r = await api(`/api/admin/${col}/${item.slug}`, { metodo: 'PATCH', json: datos });
+            if (archivo) {
+              const form = new FormData();
+              form.append('imagen', archivo);
+              await api(`/api/admin/${col}/${item.slug}/imagen`, { metodo: 'PUT', form });
+              version.set(`${col}/${item.slug}`, Date.now());
+            }
+            Object.assign(item, r);
+            avisar('Cambios guardados');
+          } else {
+            if (!archivo) throw new Error('Elige una imagen');
+            const form = new FormData();
+            form.append('imagen', archivo);
+            form.append('datos', JSON.stringify(datos));
+            const r = await api<Item>(`/api/admin/${col}`, { metodo: 'POST', form });
+            if (col === 'trabajos') lista.unshift(r);
+            else lista.push(r);
+            avisar('Añadido');
+          }
+          editor.close();
+          pintar();
+          refrescarEstado();
+        } catch (e) {
+          error.textContent = mensajeDe(e);
+        } finally {
+          boton.disabled = false;
+        }
+      });
+
+      document.querySelectorAll('[data-cerrar]').forEach((b) =>
+        b.addEventListener('click', () => (b.closest('dialog') as HTMLDialogElement).close())
+      );
+      $('#btn-anadir').addEventListener('click', () => pestana !== 'precios' && abrirEditor(pestana, null));
+
+      // ── Precios ──
+      const formPrecios = $<HTMLFormElement>('#form-precios');
+      function filaTamano(t = { alto: '', ancho: '', precio: '' } as Record<string, unknown>) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="number" data-k="alto" min="1" max="500" required value="${attr(t.alto)}" aria-label="Alto" /></td>
+          <td><input type="number" data-k="ancho" min="1" max="500" required value="${attr(t.ancho)}" aria-label="Ancho" /></td>
+          <td><input type="number" data-k="precio" min="0" required value="${attr(t.precio)}" aria-label="Precio" /></td>
+          <td><button type="button" class="btn btn-sutil" aria-label="Quitar medida">×</button></td>`;
+        $('button', tr).addEventListener('click', () => tr.remove());
+        return tr;
+      }
+      function pintarPrecios() {
+        const p = contenido.precios;
+        $('#tamanos').replaceChildren(...p.tamanos.map((t) => filaTamano(t)));
+        const v = (n: string, x: number) => ($<HTMLInputElement>(`[name=${n}]`, formPrecios).value = String(x));
+        v('enmarcado', p.enmarcado);
+        v('diptico', Math.round(p.diptico * 100));
+        v('papel', p.impresiones.papel);
+        v('tela', p.impresiones.tela);
+      }
+      $('#btn-tamano').addEventListener('click', () => $('#tamanos').append(filaTamano()));
+      formPrecios.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const num = (n: string) => Number($<HTMLInputElement>(`[name=${n}]`, formPrecios).value);
+        const tamanos = [...$('#tamanos').querySelectorAll('tr')].map((tr) =>
+          Object.fromEntries([...tr.querySelectorAll<HTMLInputElement>('input')].map((i) => [i.dataset.k, Number(i.value)]))
+        );
+        const precios = {
+          tamanos,
+          enmarcado: num('enmarcado'),
+          diptico: num('diptico') / 100,
+          impresiones: { papel: num('papel'), tela: num('tela') },
+        };
+        contenido.precios = await guardando(() => api('/api/admin/precios', { metodo: 'PUT', json: precios }), 'Precios guardados');
+      });
+
+      // ── Instagram y publicar ──
+      $('#btn-instagram').addEventListener('click', async (ev) => {
+        const b = ev.currentTarget as HTMLButtonElement;
+        b.disabled = true;
+        b.dataset.cargando = '';
+        try {
+          const r = await guardando(() => api('/api/admin/instagram/sincronizar', { metodo: 'POST' }));
+          if (r.nuevas.length) {
+            contenido.trabajos.unshift(...r.nuevas);
+            pestana = 'trabajos';
+            filtro = 'pendientes';
+            pintar();
+            avisar(`${r.nuevas.length} ${r.nuevas.length === 1 ? 'foto nueva' : 'fotos nuevas'} de Instagram. Elige dónde sale cada una, escribe su pie y márcala como visible.`, 'ok', 9000);
+          } else {
+            avisar(`No hay fotos nuevas en Instagram (revisadas ${r.revisadas} publicaciones).`);
+          }
+          if (r.errores?.length) avisar(`No se han podido descargar ${r.errores.length} fotos: ${r.errores[0]}`, 'error', 9000);
+        } catch {
+        } finally {
+          b.disabled = false;
+          delete b.dataset.cargando;
+        }
+      });
+
+      $('#btn-publicar').addEventListener('click', async (ev) => {
+        if (!publicarConfigurado) {
+          avisar('Para publicar desde aquí, configura DEPLOY_HOOK_URL en el back.', 'error', 7000);
+          return;
+        }
+        if (!confirm('¿Publicar la web con los cambios? Tardará unos minutos en verse.')) return;
+        const b = ev.currentTarget as HTMLButtonElement;
+        b.disabled = true;
+        try {
+          await guardando(() => api('/api/admin/publicar', { metodo: 'POST' }), 'Publicando: la web se actualizará en unos minutos.');
+        } catch {
+        } finally {
+          b.disabled = false;
+        }
+      });
+
+      // ── Contraseña ──
+      const dPassword = $<HTMLDialogElement>('#dialogo-password');
+      $('#btn-password').addEventListener('click', () => {
+        ($('details.menu') as HTMLDetailsElement).open = false;
+        $<HTMLFormElement>('#form-password').reset();
+        $('.error', dPassword).textContent = '';
+        dPassword.showModal();
+      });
+      $('#form-password').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const f = ev.currentTarget as HTMLFormElement;
+        try {
+          await api('/api/admin/password', { metodo: 'POST', json: Object.fromEntries(new FormData(f)) });
+          dPassword.close();
+          avisar('Contraseña cambiada');
+        } catch (e) {
+          $('.error', f).textContent = mensajeDe(e);
+        }
+      });
+
+      if (token) entrar();
+      else mostrarLogin();
+    </script>
+
+    <style is:global>
+      :root {
+        --surface: #faf6f0; --raised: #fefcf9; --sunken: #f1ebe1; --ink: #2a241f; --ink-2: #5d544b; --rule: #e4dccf;
+        --accent: #3b5636; --accent-ink: #fefcf9; --accent-soft: #eaeee4; --aviso: #8a5a14; --aviso-soft: #f8ecd6;
+        --error: #9b2c1f; --error-soft: #f8e3df;
+        --display: 'Cormorant Garamond', Georgia, serif;
+        --body: 'Jost', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --radius: 12px;
+        color-scheme: light;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body { margin: 0; background: var(--surface); color: var(--ink); font: 400 15px/1.5 var(--body); }
+      h1, h2 { font-family: var(--display); font-weight: 500; margin: 0; line-height: 1.1; }
+      h1 { font-size: 2rem; }
+      h2 { font-size: 1.45rem; }
+      a { color: var(--accent); }
+      .eyebrow { font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); margin: 0; }
+      .ayuda { color: var(--ink-2); font-size: 0.9rem; margin: 0.25rem 0 0; max-width: 48rem; }
+      .error { color: var(--error); margin: 0; min-height: 1.2em; }
+      .error:empty { display: none; }
+      .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      .tarjeta { background: var(--raised); border: 1px solid var(--rule); border-radius: var(--radius); }
+
+      label { display: grid; gap: 0.3rem; font-weight: 500; font-size: 0.9rem; }
+      input, select, textarea { font: inherit; font-weight: 400; color: inherit; background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: 0.55rem 0.7rem; width: 100%; }
+      textarea { resize: vertical; }
+      input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .casilla { display: flex; align-items: center; gap: 0.5rem; font-weight: 400; }
+      .casilla input { width: auto; }
+      fieldset { border: 1px solid var(--rule); border-radius: 10px; padding: 0.75rem; display: grid; gap: 0.75rem; margin: 0; }
+      legend { font-weight: 500; padding: 0 0.25rem; }
+      details:not(.menu) { border: 1px solid var(--rule); border-radius: 10px; padding: 0.6rem 0.75rem; }
+      details:not(.menu)[open] { display: grid; gap: 0.75rem; }
+      details:not(.menu) summary { cursor: pointer; font-weight: 500; }
+
+      .btn { display: inline-flex; align-items: center; gap: 0.45rem; border: 1px solid var(--rule); background: var(--raised); color: var(--ink); border-radius: 999px; padding: 0.55rem 1rem; font: 500 0.9rem/1 var(--body); cursor: pointer; text-decoration: none; white-space: nowrap; }
+      .btn:hover { border-color: var(--ink-2); }
+      .btn:disabled { opacity: 0.55; cursor: progress; }
+      .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .btn-primario { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+      .btn-primario:hover { border-color: var(--ink); }
+      .btn-sutil { background: transparent; }
+      .btn[data-cargando] svg { animation: girar 1s linear infinite; }
+      @keyframes girar { to { rotate: 360deg; } }
+
+      /* Login */
+      .login { min-height: 100dvh; display: grid; place-items: center; padding: 1rem; }
+      .login-form { width: min(100%, 24rem); padding: 2rem; display: grid; gap: 1rem; }
+      .login-form .btn { justify-content: center; }
+
+      /* Barra */
+      .barra { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--raised); border-bottom: 1px solid var(--rule); }
+      .barra-marca strong { font-family: var(--display); font-size: 1.35rem; font-weight: 600; }
+      .barra-marca span { color: var(--ink-2); margin-left: 0.35rem; }
+      .barra-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+      .estado { background: var(--aviso-soft); color: var(--aviso); border-radius: 999px; padding: 0.3rem 0.75rem; font-size: 0.82rem; font-weight: 500; }
+      .menu { position: relative; }
+      .menu summary { list-style: none; }
+      .menu summary::-webkit-details-marker { display: none; }
+      .menu-lista { position: absolute; right: 0; top: calc(100% + 0.4rem); background: var(--raised); border: 1px solid var(--rule); border-radius: 10px; padding: 0.35rem; display: grid; min-width: 12rem; box-shadow: 0 8px 24px rgb(0 0 0 / 0.08); }
+      .menu-lista > * { all: unset; padding: 0.55rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+      .menu-lista > *:hover, .menu-lista > *:focus-visible { background: var(--sunken); }
+
+      .pestanas { display: flex; gap: 0.25rem; overflow-x: auto; padding: 0.5rem 1rem 0; border-bottom: 1px solid var(--rule); scrollbar-width: none; }
+      .pestanas button { all: unset; cursor: pointer; padding: 0.6rem 0.9rem; border-bottom: 2px solid transparent; color: var(--ink-2); font-weight: 500; white-space: nowrap; }
+      .pestanas button[aria-current] { color: var(--ink); border-color: var(--accent); }
+      .pestanas button:focus-visible { outline: 2px solid var(--accent); }
+
+      .contenido { max-width: 80rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+      .cabecera { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1.25rem; }
+
+      .filtros { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+      .filtros button { border: 1px solid var(--rule); background: var(--raised); border-radius: 999px; padding: 0.35rem 0.8rem; font: inherit; font-size: 0.85rem; cursor: pointer; color: var(--ink-2); }
+      .filtros button[aria-pressed] { background: var(--ink); border-color: var(--ink); color: var(--raised); }
+      .filtros button[data-alerta]:not([aria-pressed]) { border-color: var(--aviso); color: var(--aviso); background: var(--aviso-soft); }
+
+      .rejilla { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr)); gap: 1rem; }
+      .item { overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+      .item img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--sunken); }
+      .item[data-oculto] img { opacity: 0.45; }
+      .item[data-pendiente] { border-color: var(--aviso); box-shadow: 0 0 0 1px var(--aviso); }
+      .item-cuerpo { padding: 0.75rem; display: grid; gap: 0.5rem; align-content: start; }
+      .item-cuerpo strong { font-weight: 500; overflow-wrap: anywhere; }
+      .etiquetas { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+      .etiquetas span { font-size: 0.75rem; background: var(--sunken); color: var(--ink-2); border-radius: 999px; padding: 0.1rem 0.55rem; }
+      .etiquetas [data-etiqueta='Oculta'] { background: var(--ink); color: var(--raised); }
+      .etiquetas [data-etiqueta='Pendiente'] { background: var(--aviso-soft); color: var(--aviso); }
+      .etiquetas [data-etiqueta='Nueva'], .etiquetas [data-etiqueta='Destacada'] { background: var(--accent-soft); color: var(--accent); }
+      .item-acciones { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.25rem; }
+      .item-acciones button { border: 1px solid var(--rule); background: transparent; border-radius: 6px; padding: 0.3rem 0.55rem; font: inherit; font-size: 0.8rem; cursor: pointer; color: var(--ink); }
+      .item-acciones button:hover:not(:disabled) { border-color: var(--ink-2); }
+      .item-acciones button:disabled { opacity: 0.35; cursor: default; }
+      .item-acciones button:last-child { color: var(--error); margin-left: auto; }
+      .vacio { color: var(--ink-2); padding: 2rem 0; }
+
+      /* Precios */
+      .precios { padding: 1.25rem; display: grid; gap: 1rem; max-width: 40rem; }
+      .precios table { border-collapse: collapse; width: 100%; }
+      .precios th { text-align: left; font-weight: 500; font-size: 0.85rem; color: var(--ink-2); padding: 0 0.4rem 0.3rem 0; }
+      .precios td { padding: 0.2rem 0.4rem 0.2rem 0; }
+      .precios td:last-child { width: 1%; }
+      .campos-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.75rem; }
+
+      /* Diálogos */
+      .dialogo { border: none; border-radius: 16px; padding: 0; width: min(100% - 2rem, 56rem); max-height: calc(100dvh - 2rem); background: var(--raised); color: var(--ink); box-shadow: 0 20px 60px rgb(0 0 0 / 0.25); }
+      .dialogo-pequeno { width: min(100% - 2rem, 26rem); }
+      .dialogo::backdrop { background: rgb(42 36 31 / 0.45); }
+      .dialogo form { display: grid; max-height: calc(100dvh - 2rem); grid-template-rows: auto 1fr auto auto; }
+      .dialogo-cabecera { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid var(--rule); }
+      .cerrar { all: unset; cursor: pointer; font-size: 1.6rem; line-height: 1; padding: 0 0.3rem; color: var(--ink-2); }
+      .dialogo-cuerpo { overflow-y: auto; padding: 1.25rem; display: grid; grid-template-columns: minmax(0, 16rem) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+      .dialogo-cuerpo.una-columna { grid-template-columns: 1fr; gap: 0.9rem; }
+      .dialogo .error { padding: 0 1.25rem 0.5rem; }
+      .dialogo-pie { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.9rem 1.25rem; border-top: 1px solid var(--rule); }
+      .editor-imagen { display: grid; gap: 0.6rem; position: sticky; top: 0; }
+      .editor-imagen img { width: 100%; object-fit: contain; background: var(--sunken); border-radius: 10px; max-height: 22rem; }
+      .subir { justify-content: center; }
+      .editor-campos { display: grid; gap: 0.9rem; }
+      .instagram { background: var(--sunken); border-radius: 10px; padding: 0.75rem; font-size: 0.88rem; }
+      .instagram p { margin: 0; }
+      .instagram .caption { margin-top: 0.4rem; white-space: pre-line; color: var(--ink-2); max-height: 8rem; overflow-y: auto; }
+      @media (max-width: 640px) {
+        .dialogo-cuerpo { grid-template-columns: 1fr; }
+        .editor-imagen { position: static; }
+        .editor-imagen img { max-height: 14rem; }
+        .barra-acciones .btn { padding: 0.5rem 0.75rem; }
+        .rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+        .item-cuerpo { padding: 0.6rem; }
+      }
+
+      .aviso { position: fixed; left: 50%; bottom: 1.25rem; translate: -50% 1rem; opacity: 0; pointer-events: none; z-index: 20; max-width: min(100% - 2rem, 34rem); background: var(--ink); color: var(--raised); padding: 0.75rem 1rem; border-radius: 10px; transition: opacity 0.2s, translate 0.2s; box-shadow: 0 8px 24px rgb(0 0 0 / 0.2); }
+      .aviso[data-visible] { opacity: 1; translate: -50% 0; }
+      .aviso[data-tipo='error'] { background: var(--error); }
+    </style>
+  </body>
+</html>

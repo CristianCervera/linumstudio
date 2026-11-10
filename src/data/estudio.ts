@@ -1,4 +1,5 @@
 import type { ImageMetadata } from 'astro';
+import contenido from './contenido.json' with { type: 'json' };
 
 const telaImgs = import.meta.glob<{ default: ImageMetadata }>('../assets/telas/*.jpg', { eager: true });
 const trabajoImgs = import.meta.glob<{ default: ImageMetadata }>('../assets/trabajos/*.jpg', { eager: true });
@@ -25,60 +26,37 @@ export type Familia = 'ikat' | 'floral';
 
 export const familias: Familia[] = ['ikat', 'floral'];
 
-const telasBase: { nombre: string; slug: string; familia: Familia; nueva?: boolean }[] = [
-  { nombre: 'Cádiz', slug: 'cadiz', familia: 'floral', nueva: true },
-  { nombre: 'Mumbai', slug: 'mumbai', familia: 'floral', nueva: true },
-  { nombre: 'Osaka', slug: 'osaka', familia: 'floral', nueva: true },
-  { nombre: 'Bristol', slug: 'bristol', familia: 'floral', nueva: true },
-  { nombre: 'Ubud', slug: 'ubud', familia: 'floral', nueva: true },
-  { nombre: 'Melbourne', slug: 'melbourne', familia: 'floral', nueva: true },
-  { nombre: 'Granada', slug: 'granada', familia: 'ikat', nueva: true },
-  { nombre: 'Tulum', slug: 'tulum', familia: 'ikat', nueva: true },
-  { nombre: 'Habana', slug: 'habana', familia: 'floral' },
-  { nombre: 'Valencia', slug: 'valencia', familia: 'floral' },
-  { nombre: 'Estambul', slug: 'estambul', familia: 'ikat' },
-  { nombre: 'Londres', slug: 'londres', familia: 'ikat' },
-  { nombre: 'Atenas', slug: 'atenas', familia: 'ikat' },
-  { nombre: 'Venecia', slug: 'venecia', familia: 'ikat' },
-  { nombre: 'Marrakech', slug: 'marrakech', familia: 'ikat' },
-  { nombre: 'Katmandú', slug: 'katmandu', familia: 'ikat' },
-  { nombre: 'Tánger', slug: 'tanger', familia: 'ikat' },
-  { nombre: 'Cairo', slug: 'cairo', familia: 'ikat' },
-  { nombre: 'Roma', slug: 'roma', familia: 'ikat' },
-  { nombre: 'Zanzíbar', slug: 'zanzibar', familia: 'ikat' },
-  { nombre: 'Bogotá', slug: 'bogota', familia: 'floral' },
-  { nombre: 'Phuket', slug: 'phuket', familia: 'floral' },
-  { nombre: 'Kioto', slug: 'kioto', familia: 'floral' },
-  { nombre: 'Santorini', slug: 'santorini', familia: 'floral' },
-];
+// Telas, trabajos, cuadritos y precios viven en contenido.json, que se edita desde el panel (/admin/)
+// y `npm run contenido` descarga del back con sus imágenes. Lo que no es visible no sale en la web.
+const visibles = <T extends { visible?: boolean }>(xs: T[]) => xs.filter((x) => x.visible !== false);
 
-export const telas = telasBase.map((t) => ({ ...t, imagen: img(telaImgs, 'telas', t.slug) }));
+export const telas = visibles(contenido.telas).map((t) => ({
+  nombre: t.nombre,
+  slug: t.slug,
+  familia: t.familia as Familia,
+  nueva: t.nueva,
+  destacada: t.destacada,
+  imagen: img(telaImgs, 'telas', t.slug),
+}));
 
-/** Tarifas del catálogo 2026. Cada tramo agrupa dos medidas con el mismo precio. */
-export const tamanos = [
-  { medida: '60 × 40', ancho: 40, alto: 60, precio: 80 },
-  { medida: '50 × 50', ancho: 50, alto: 50, precio: 80 },
-  { medida: '70 × 50', ancho: 50, alto: 70, precio: 90 },
-  { medida: '60 × 60', ancho: 60, alto: 60, precio: 90 },
-  { medida: '90 × 60', ancho: 60, alto: 90, precio: 110 },
-  { medida: '80 × 70', ancho: 70, alto: 80, precio: 110 },
-  { medida: '100 × 70', ancho: 70, alto: 100, precio: 130 },
-  { medida: '90 × 80', ancho: 80, alto: 90, precio: 130 },
-];
+/** Telas que salen de muestra en la portada y en la cabecera de los tapices. */
+export const telasDestacadas = telas.filter((t) => t.destacada).length ? telas.filter((t) => t.destacada) : telas.slice(0, 7);
 
-export const tarifas = [
-  { medidas: '60 × 40 · 50 × 50 cm', precio: 80 },
-  { medidas: '70 × 50 · 60 × 60 cm', precio: 90 },
-  { medidas: '90 × 60 · 80 × 70 cm', precio: 110 },
-  { medidas: '100 × 70 · 90 × 80 cm', precio: 130 },
-];
+/** Tarifas del catálogo. Las medidas se escriben alto × ancho; las que comparten precio van en el mismo tramo. */
+const precios = contenido.precios;
+export const tamanos = precios.tamanos.map((t) => ({ medida: `${t.alto} × ${t.ancho}`, ancho: t.ancho, alto: t.alto, precio: t.precio }));
 
-export const enmarcado = { precio: 30 };
-export const diptico = { descuento: 0.25 };
+export const tarifas = [...new Set(tamanos.map((t) => t.precio))].map((precio) => ({
+  medidas: `${tamanos.filter((t) => t.precio === precio).map((t) => t.medida).join(' · ')} cm`,
+  precio,
+}));
+
+export const enmarcado = { precio: precios.enmarcado };
+export const diptico = { descuento: precios.diptico };
 
 /**
  * Cuadritos: una lámina sobre tela de fondo, en marco de madera natural (incluido). Catálogo de cuadritos 2026.
- * Las medidas son por fuera del marco; los nombres de telas y diseños están en src/i18n/ui.ts.
+ * Las medidas son por fuera del marco; los nombres de telas y diseños, en contenido.json.
  */
 const cuadritoTelaImgs = import.meta.glob<{ default: ImageMetadata }>('../assets/cuadritos/telas/*.jpg', { eager: true });
 const disenoImgs = import.meta.glob<{ default: ImageMetadata }>('../assets/cuadritos/disenos/*.jpg', { eager: true });
@@ -88,19 +66,19 @@ export const cuadrito = {
   ancho: 20,
   alto: 27,
   moldura: 2,
-  telas: ['flores-verdes', 'rayas-teja', 'hojas-malva', 'ramitas-mostaza', 'granadas', 'rayas-azules'].map((slug) => ({
+  telas: visibles(contenido.cuadrito.telas).map(({ slug }) => ({
     slug,
     imagen: img(cuadritoTelaImgs, 'cuadritos/telas', slug),
   })),
-  disenos: ['sagrado-corazon', 'desamparados', 'madre', 'pilar'].map((slug) => ({
+  disenos: visibles(contenido.cuadrito.disenos).map(({ slug }) => ({
     slug,
     imagen: img(disenoImgs, 'cuadritos/disenos', slug),
   })),
   impresiones: [
-    { id: 'papel', precio: 20 },
-    { id: 'tela', precio: 25 },
-  ],
-} as const;
+    { id: 'papel', precio: precios.impresiones.papel },
+    { id: 'tela', precio: precios.impresiones.tela },
+  ] as const,
+};
 
 export type Impresion = (typeof cuadrito.impresiones)[number]['id'];
 
@@ -113,26 +91,12 @@ export const marcos = [
 
 export type Producto = 'tapiz' | 'cuadrito';
 
-/** Fotos de trabajos de cada producto, para su página. Textos (alt y pie) en src/i18n/ui.ts, por slug. */
-const trabajosDe = (slugs: string[]) => slugs.map((slug) => ({ slug, imagen: img(trabajoImgs, 'trabajos', slug) }));
+/** Fotos de trabajos de cada producto, para su página. Textos (alt y pie) en contenido.json, por slug. */
+const trabajosVisibles = visibles(contenido.trabajos).map((t) => ({ ...t, imagen: img(trabajoImgs, 'trabajos', t.slug) }));
+const trabajosDe = (p: Producto) => trabajosVisibles.filter((t) => t.producto === p).map(({ slug, imagen }) => ({ slug, imagen }));
 export const trabajos: Record<Producto, { slug: string; imagen: ImageMetadata }[]> = {
-  tapiz: trabajosDe([
-    'instalacion-ikat',
-    'diptico-salon',
-    'flores-aparte',
-    'habana-dormitorio',
-    'diptico-dormitorio',
-    'ikat-verde-infantil',
-    'granada-recibidor',
-    'osaka-cocina',
-    'ubud-dormitorio',
-    'londres-estante',
-    'cadiz-diptico',
-    'valencia-bano',
-    'tulum-comedor',
-    'katmandu-patio',
-  ]),
-  cuadrito: trabajosDe(['cuadritos-aparador', 'cuadrito-nacimiento', 'cuadrito-madre', 'cuadrito-desamparados']),
+  tapiz: trabajosDe('tapiz'),
+  cuadrito: trabajosDe('cuadrito'),
 };
 
 /** Precio más bajo de cada producto, para los «desde». */
@@ -141,5 +105,5 @@ export const desde: Record<Producto, number> = {
   cuadrito: Math.min(...cuadrito.impresiones.map((i) => i.precio)),
 };
 
-/** Todas las fotos de trabajos, para el mosaico de la cabecera. */
-export const mosaico = Object.values(trabajoImgs).map((m) => m.default);
+/** Todas las fotos de trabajos visibles (también las que no son de ningún producto), para el mosaico de la cabecera. */
+export const mosaico = [...trabajosVisibles].sort((a, b) => a.slug.localeCompare(b.slug)).map((t) => t.imagen);

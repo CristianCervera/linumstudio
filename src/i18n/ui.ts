@@ -1,3 +1,5 @@
+import contenido from '../data/contenido.json' with { type: 'json' };
+
 export const idiomas = {
   es: { nombre: 'Español', corto: 'ES', intl: 'es-ES', og: 'es_ES' },
   en: { nombre: 'English', corto: 'EN', intl: 'en-GB', og: 'en_GB' },
@@ -21,6 +23,22 @@ export const euros = (lang: Lang, n: number) =>
   new Intl.NumberFormat(idiomas[lang].intl, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Math.round(n));
 
 type Trabajo = { alt: string; pie: string };
+
+// Los textos de las fotos de trabajos y los nombres de las telas y diseños de cuadrito se editan desde el panel
+// (/admin/) y viven en src/data/contenido.json. Si falta un idioma, se usa el español.
+type Textos<T> = Partial<Record<Lang, T>>;
+const textosTrabajos = (lang: Lang): Record<string, Trabajo> =>
+  Object.fromEntries(
+    (contenido.trabajos as { slug: string; textos: Textos<Trabajo> }[]).map((t) => {
+      const es = t.textos.es ?? { alt: '', pie: '' };
+      const x = t.textos[lang];
+      return [t.slug, { alt: x?.alt || es.alt, pie: x?.pie || es.pie }];
+    })
+  );
+const nombresCuadrito = (tipo: 'telas' | 'disenos', lang: Lang): Record<string, string> =>
+  Object.fromEntries(
+    (contenido.cuadrito[tipo] as { slug: string; nombres: Textos<string> }[]).map((x) => [x.slug, x.nombres[lang] || x.nombres.es || x.slug])
+  );
 
 const es = {
   meta: {
@@ -55,26 +73,7 @@ const es = {
     eyebrow: 'Trabajos',
     titulo: 'Así quedan en la pared',
     instagram: 'Más en Instagram',
-    items: {
-      'instalacion-ikat': { alt: 'Colgando un tapiz de ikat rojo y ocre enmarcado en madera natural en un pasillo blanco', pie: 'Tánger, recién colgado' },
-      'diptico-salon': { alt: 'Díptico de ikat verde sobre un sofá beige', pie: 'Díptico Katmandú en un salón' },
-      'flores-aparte': { alt: 'Tapiz floral enmarcado en la pared de la floristería Flores Aparte, rodeado de flores', pie: 'Nuestro muestrario en Flores Aparte' },
-      'habana-dormitorio': { alt: 'Tapiz de palmeras y sombrillas sobre el cabecero de una cama', pie: 'Habana sobre un cabecero' },
-      'diptico-dormitorio': { alt: 'Dos tapices de ikat verde y teja sobre una cama con cojines de ikat', pie: 'Díptico Atenas en un dormitorio' },
-      'ikat-verde-infantil': { alt: 'Tapiz de ikat verde bajo una cabeza de caballo de mimbre en una habitación infantil', pie: 'Katmandú en una habitación infantil' },
-      'granada-recibidor': { alt: 'Tapiz de ikat verde agua y rosa sobre una consola de madera', pie: 'Granada en un recibidor' },
-      'osaka-cocina': { alt: 'Tapiz floral rojo enmarcado en una cocina de madera clara', pie: 'Osaka en la cocina' },
-      'ubud-dormitorio': { alt: 'Tapiz de garzas y árboles sobre una cama blanca bajo un arco', pie: 'Ubud en un dormitorio' },
-      'londres-estante': { alt: 'Tapiz verde salvia con flores pequeñas apoyado en una repisa de madera', pie: 'Londres' },
-      'cadiz-diptico': { alt: 'Díptico floral azul y ocre sobre un sofá frente al mar', pie: 'Díptico Cádiz' },
-      'valencia-bano': { alt: 'Tapiz de granadas en un baño de tonos arena', pie: 'Valencia en un baño' },
-      'tulum-comedor': { alt: 'Dos tapices de ikat gris en un comedor con lámpara de mimbre', pie: 'Díptico Tulum en un comedor' },
-      'katmandu-patio': { alt: 'Tapiz de ikat verde en la pared encalada de un patio', pie: 'Katmandú en un patio' },
-      'cuadritos-aparador': { alt: 'Cuatro cuadritos con láminas religiosas sobre telas estampadas, apoyados en un aparador de madera', pie: 'Cuadritos sobre un aparador' },
-      'cuadrito-nacimiento': { alt: 'Cuadrito del Sagrado Corazón impreso en tela sobre rayas teja, entre dos figuras de un belén', pie: 'Sagrado Corazón impreso en tela' },
-      'cuadrito-madre': { alt: 'Cuadrito de una mujer embarazada sobre tela de flores verdes, encima de una cómoda con cestas', pie: 'Madre sobre flores verdes' },
-      'cuadrito-desamparados': { alt: 'Cuadrito de la Virgen de los Desamparados sobre tela de hojas malva, en un taburete junto a una vela', pie: 'Virgen de los Desamparados' },
-    } as Record<string, Trabajo>,
+    items: textosTrabajos('es'),
   },
   config: {
     eyebrow: 'Tu tapiz, en tres pasos',
@@ -126,8 +125,8 @@ const es = {
       impresion: 'Impresión',
       impresionNota: '27 × 20 cm, con marco de madera natural',
       impresiones: { papel: 'Papel verjurado', tela: 'Tela' },
-      telas: { 'flores-verdes': 'Flores verdes', 'rayas-teja': 'Rayas teja', 'hojas-malva': 'Hojas malva', 'ramitas-mostaza': 'Ramitas mostaza', granadas: 'Granadas', 'rayas-azules': 'Rayas azules' } as Record<string, string>,
-      disenos: { 'sagrado-corazon': 'Sagrado Corazón', desamparados: 'Virgen de los Desamparados', madre: 'Madre', pilar: 'Virgen del Pilar' } as Record<string, string>,
+      telas: nombresCuadrito('telas', 'es'),
+      disenos: nombresCuadrito('disenos', 'es'),
       presupuesto: 'Para otras telas, tamaños y diseños te hacemos un presupuesto personalizado.',
       pedir: 'Pedir este cuadrito',
       mensaje: (o: { diseno: string; tela: string; impresion: string }) =>
@@ -246,26 +245,7 @@ const en: Diccionario = {
     eyebrow: 'Our work',
     titulo: 'How they look on the wall',
     instagram: 'More on Instagram',
-    items: {
-      'instalacion-ikat': { alt: 'Hanging a red and ochre ikat piece in a natural wood frame in a white hallway', pie: 'Tánger, just hung' },
-      'diptico-salon': { alt: 'Green ikat diptych above a beige sofa', pie: 'Katmandú diptych in a living room' },
-      'flores-aparte': { alt: 'Framed floral piece on the wall of the Flores Aparte flower shop, surrounded by flowers', pie: 'Our sample corner at Flores Aparte' },
-      'habana-dormitorio': { alt: 'Palm tree and parasol print above a bed headboard', pie: 'Habana above a headboard' },
-      'diptico-dormitorio': { alt: 'Two green and terracotta ikat pieces above a bed with ikat cushions', pie: 'Atenas diptych in a bedroom' },
-      'ikat-verde-infantil': { alt: 'Green ikat piece under a wicker horse head in a child’s room', pie: 'Katmandú in a child’s room' },
-      'granada-recibidor': { alt: 'Teal and pink ikat piece above a wooden console table', pie: 'Granada in an entryway' },
-      'osaka-cocina': { alt: 'Framed red floral piece in a light wood kitchen', pie: 'Osaka in the kitchen' },
-      'ubud-dormitorio': { alt: 'Heron and tree print above a white bed under an arch', pie: 'Ubud in a bedroom' },
-      'londres-estante': { alt: 'Sage green piece with small flowers leaning on a wooden shelf', pie: 'Londres' },
-      'cadiz-diptico': { alt: 'Blue and ochre floral diptych above a sofa facing the sea', pie: 'Cádiz diptych' },
-      'valencia-bano': { alt: 'Pomegranate print in a sand-coloured bathroom', pie: 'Valencia in a bathroom' },
-      'tulum-comedor': { alt: 'Two grey ikat pieces in a dining room with a wicker lamp', pie: 'Tulum diptych in a dining room' },
-      'katmandu-patio': { alt: 'Green ikat piece on the whitewashed wall of a patio', pie: 'Katmandú in a patio' },
-      'cuadritos-aparador': { alt: 'Four small frames with religious prints on patterned fabrics, leaning on a wooden sideboard', pie: 'Small frames on a sideboard' },
-      'cuadrito-nacimiento': { alt: 'Small frame with the Sacred Heart printed on fabric over terracotta stripes, between two nativity figures', pie: 'Sacred Heart printed on fabric' },
-      'cuadrito-madre': { alt: 'Small frame with a pregnant woman on green floral fabric, on top of a chest with baskets', pie: 'Mother on green flowers' },
-      'cuadrito-desamparados': { alt: 'Small frame with Our Lady of the Forsaken on mauve leaf fabric, on a stool next to a candle', pie: 'Our Lady of the Forsaken' },
-    },
+    items: textosTrabajos('en'),
   },
   config: {
     eyebrow: 'Your piece, in three steps',
@@ -317,8 +297,8 @@ const en: Diccionario = {
       impresion: 'Print',
       impresionNota: '27 × 20 cm, natural wood frame included',
       impresiones: { papel: 'Laid paper', tela: 'Fabric' },
-      telas: { 'flores-verdes': 'Green flowers', 'rayas-teja': 'Terracotta stripes', 'hojas-malva': 'Mauve leaves', 'ramitas-mostaza': 'Mustard sprigs', granadas: 'Pomegranates', 'rayas-azules': 'Blue stripes' },
-      disenos: { 'sagrado-corazon': 'Sacred Heart', desamparados: 'Our Lady of the Forsaken', madre: 'Mother', pilar: 'Our Lady of the Pillar' },
+      telas: nombresCuadrito('telas', 'en'),
+      disenos: nombresCuadrito('disenos', 'en'),
       presupuesto: 'For other fabrics, sizes and designs we’ll send you a custom quote.',
       pedir: 'Order this frame',
       mensaje: (o) =>
@@ -435,26 +415,7 @@ const de: Diccionario = {
     eyebrow: 'Arbeiten',
     titulo: 'So wirken sie an der Wand',
     instagram: 'Mehr auf Instagram',
-    items: {
-      'instalacion-ikat': { alt: 'Ein rot-ockerfarbenes Ikat-Stoffbild in Naturholzrahmen wird in einem weißen Flur aufgehängt', pie: 'Tánger, frisch aufgehängt' },
-      'diptico-salon': { alt: 'Grünes Ikat-Diptychon über einem beigen Sofa', pie: 'Diptychon Katmandú im Wohnzimmer' },
-      'flores-aparte': { alt: 'Gerahmtes Blumen-Stoffbild an der Wand des Blumenladens Flores Aparte, umgeben von Blumen', pie: 'Unsere Musterecke bei Flores Aparte' },
-      'habana-dormitorio': { alt: 'Stoffbild mit Palmen und Sonnenschirmen über einem Bettkopfteil', pie: 'Habana über dem Bett' },
-      'diptico-dormitorio': { alt: 'Zwei grün-terrakottafarbene Ikat-Stoffbilder über einem Bett mit Ikat-Kissen', pie: 'Diptychon Atenas im Schlafzimmer' },
-      'ikat-verde-infantil': { alt: 'Grünes Ikat-Stoffbild unter einem Pferdekopf aus Korb im Kinderzimmer', pie: 'Katmandú im Kinderzimmer' },
-      'granada-recibidor': { alt: 'Ikat-Stoffbild in Türkis und Rosa über einer Holzkonsole', pie: 'Granada im Eingangsbereich' },
-      'osaka-cocina': { alt: 'Gerahmtes rotes Blumen-Stoffbild in einer Küche aus hellem Holz', pie: 'Osaka in der Küche' },
-      'ubud-dormitorio': { alt: 'Stoffbild mit Reihern und Bäumen über einem weißen Bett unter einem Bogen', pie: 'Ubud im Schlafzimmer' },
-      'londres-estante': { alt: 'Salbeigrünes Stoffbild mit kleinen Blumen, an ein Holzregal gelehnt', pie: 'Londres' },
-      'cadiz-diptico': { alt: 'Blau-ockerfarbenes Blumen-Diptychon über einem Sofa mit Meerblick', pie: 'Diptychon Cádiz' },
-      'valencia-bano': { alt: 'Stoffbild mit Granatäpfeln in einem sandfarbenen Bad', pie: 'Valencia im Bad' },
-      'tulum-comedor': { alt: 'Zwei graue Ikat-Stoffbilder in einem Esszimmer mit Korblampe', pie: 'Diptychon Tulum im Esszimmer' },
-      'katmandu-patio': { alt: 'Grünes Ikat-Stoffbild an der gekalkten Wand eines Innenhofs', pie: 'Katmandú im Innenhof' },
-      'cuadritos-aparador': { alt: 'Vier kleine Bilder mit religiösen Motiven auf gemusterten Stoffen, an eine Holzanrichte gelehnt', pie: 'Kleine Bilder auf einer Anrichte' },
-      'cuadrito-nacimiento': { alt: 'Kleines Bild mit dem Heiligsten Herzen auf Stoff gedruckt, auf terrakottafarbenen Streifen, zwischen zwei Krippenfiguren', pie: 'Heiligstes Herz, auf Stoff gedruckt' },
-      'cuadrito-madre': { alt: 'Kleines Bild einer Schwangeren auf grünem Blumenstoff, auf einer Kommode mit Körben', pie: 'Mutter auf grünen Blumen' },
-      'cuadrito-desamparados': { alt: 'Kleines Bild der Jungfrau der Verlassenen auf malvenfarbenem Blätterstoff, auf einem Hocker neben einer Kerze', pie: 'Jungfrau der Verlassenen' },
-    },
+    items: textosTrabajos('de'),
   },
   config: {
     eyebrow: 'Ihr Stoffbild in drei Schritten',
@@ -506,8 +467,8 @@ const de: Diccionario = {
       impresion: 'Druck',
       impresionNota: '27 × 20 cm, mit Naturholzrahmen',
       impresiones: { papel: 'Büttenpapier', tela: 'Stoff' },
-      telas: { 'flores-verdes': 'Grüne Blumen', 'rayas-teja': 'Terrakotta-Streifen', 'hojas-malva': 'Malvenblätter', 'ramitas-mostaza': 'Senfranken', granadas: 'Granatäpfel', 'rayas-azules': 'Blaue Streifen' },
-      disenos: { 'sagrado-corazon': 'Heiligstes Herz', desamparados: 'Jungfrau der Verlassenen', madre: 'Mutter', pilar: 'Jungfrau vom Pfeiler' },
+      telas: nombresCuadrito('telas', 'de'),
+      disenos: nombresCuadrito('disenos', 'de'),
       presupuesto: 'Für andere Stoffe, Größen und Motive machen wir dir ein individuelles Angebot.',
       pedir: 'Dieses Bild anfragen',
       mensaje: (o) =>
@@ -624,26 +585,7 @@ const fr: Diccionario = {
     eyebrow: 'Réalisations',
     titulo: 'Une fois au mur',
     instagram: 'Plus sur Instagram',
-    items: {
-      'instalacion-ikat': { alt: 'Accrochage d’un tableau ikat rouge et ocre au cadre en bois naturel dans un couloir blanc', pie: 'Tánger, tout juste accroché' },
-      'diptico-salon': { alt: 'Diptyque ikat vert au-dessus d’un canapé beige', pie: 'Diptyque Katmandú dans un salon' },
-      'flores-aparte': { alt: 'Tableau fleuri encadré au mur de la boutique de fleurs Flores Aparte, entouré de fleurs', pie: 'Notre coin d’échantillons chez Flores Aparte' },
-      'habana-dormitorio': { alt: 'Tableau à motif de palmiers et d’ombrelles au-dessus d’une tête de lit', pie: 'Habana au-dessus d’un lit' },
-      'diptico-dormitorio': { alt: 'Deux tableaux ikat vert et terracotta au-dessus d’un lit avec des coussins ikat', pie: 'Diptyque Atenas dans une chambre' },
-      'ikat-verde-infantil': { alt: 'Tableau ikat vert sous une tête de cheval en osier dans une chambre d’enfant', pie: 'Katmandú dans une chambre d’enfant' },
-      'granada-recibidor': { alt: 'Tableau ikat vert d’eau et rose au-dessus d’une console en bois', pie: 'Granada dans une entrée' },
-      'osaka-cocina': { alt: 'Tableau fleuri rouge encadré dans une cuisine en bois clair', pie: 'Osaka dans la cuisine' },
-      'ubud-dormitorio': { alt: 'Tableau de hérons et d’arbres au-dessus d’un lit blanc sous une arche', pie: 'Ubud dans une chambre' },
-      'londres-estante': { alt: 'Tableau vert sauge à petites fleurs posé sur une étagère en bois', pie: 'Londres' },
-      'cadiz-diptico': { alt: 'Diptyque fleuri bleu et ocre au-dessus d’un canapé face à la mer', pie: 'Diptyque Cádiz' },
-      'valencia-bano': { alt: 'Tableau à motif de grenades dans une salle de bains couleur sable', pie: 'Valencia dans une salle de bains' },
-      'tulum-comedor': { alt: 'Deux tableaux ikat gris dans une salle à manger avec une suspension en osier', pie: 'Diptyque Tulum dans une salle à manger' },
-      'katmandu-patio': { alt: 'Tableau ikat vert sur le mur blanchi à la chaux d’un patio', pie: 'Katmandú dans un patio' },
-      'cuadritos-aparador': { alt: 'Quatre petits cadres avec des images religieuses sur tissus imprimés, posés sur un buffet en bois', pie: 'Petits cadres sur un buffet' },
-      'cuadrito-nacimiento': { alt: 'Petit cadre du Sacré-Cœur imprimé sur tissu, sur rayures terracotta, entre deux santons de crèche', pie: 'Sacré-Cœur imprimé sur tissu' },
-      'cuadrito-madre': { alt: 'Petit cadre d’une femme enceinte sur tissu à fleurs vertes, sur une commode à paniers', pie: 'Mère sur fleurs vertes' },
-      'cuadrito-desamparados': { alt: 'Petit cadre de Notre-Dame des Abandonnés sur tissu à feuilles mauves, sur un tabouret près d’une bougie', pie: 'Notre-Dame des Abandonnés' },
-    },
+    items: textosTrabajos('fr'),
   },
   config: {
     eyebrow: 'Votre tableau en trois étapes',
@@ -695,8 +637,8 @@ const fr: Diccionario = {
       impresion: 'Impression',
       impresionNota: '27 × 20 cm, cadre en bois naturel inclus',
       impresiones: { papel: 'Papier vergé', tela: 'Tissu' },
-      telas: { 'flores-verdes': 'Fleurs vertes', 'rayas-teja': 'Rayures terracotta', 'hojas-malva': 'Feuilles mauves', 'ramitas-mostaza': 'Brins moutarde', granadas: 'Grenades', 'rayas-azules': 'Rayures bleues' },
-      disenos: { 'sagrado-corazon': 'Sacré-Cœur', desamparados: 'Notre-Dame des Abandonnés', madre: 'Mère', pilar: 'Notre-Dame du Pilier' },
+      telas: nombresCuadrito('telas', 'fr'),
+      disenos: nombresCuadrito('disenos', 'fr'),
       presupuesto: 'Pour d’autres tissus, tailles et motifs, nous vous faisons un devis personnalisé.',
       pedir: 'Commander ce cadre',
       mensaje: (o) =>

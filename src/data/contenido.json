@@ -1,0 +1,952 @@
+{
+  "telas": [
+    {
+      "slug": "cadiz",
+      "nombre": "Cádiz",
+      "familia": "floral",
+      "nueva": true,
+      "destacada": true,
+      "visible": true
+    },
+    {
+      "slug": "mumbai",
+      "nombre": "Mumbai",
+      "familia": "floral",
+      "nueva": true,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "osaka",
+      "nombre": "Osaka",
+      "familia": "floral",
+      "nueva": true,
+      "destacada": true,
+      "visible": true
+    },
+    {
+      "slug": "bristol",
+      "nombre": "Bristol",
+      "familia": "floral",
+      "nueva": true,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "ubud",
+      "nombre": "Ubud",
+      "familia": "floral",
+      "nueva": true,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "melbourne",
+      "nombre": "Melbourne",
+      "familia": "floral",
+      "nueva": true,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "granada",
+      "nombre": "Granada",
+      "familia": "ikat",
+      "nueva": true,
+      "destacada": true,
+      "visible": true
+    },
+    {
+      "slug": "tulum",
+      "nombre": "Tulum",
+      "familia": "ikat",
+      "nueva": true,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "habana",
+      "nombre": "Habana",
+      "familia": "floral",
+      "nueva": false,
+      "destacada": true,
+      "visible": true
+    },
+    {
+      "slug": "valencia",
+      "nombre": "Valencia",
+      "familia": "floral",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "estambul",
+      "nombre": "Estambul",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "londres",
+      "nombre": "Londres",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "atenas",
+      "nombre": "Atenas",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "venecia",
+      "nombre": "Venecia",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "marrakech",
+      "nombre": "Marrakech",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "katmandu",
+      "nombre": "Katmandú",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": true,
+      "visible": true
+    },
+    {
+      "slug": "tanger",
+      "nombre": "Tánger",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": true,
+      "visible": true
+    },
+    {
+      "slug": "cairo",
+      "nombre": "Cairo",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "roma",
+      "nombre": "Roma",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "zanzibar",
+      "nombre": "Zanzíbar",
+      "familia": "ikat",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "bogota",
+      "nombre": "Bogotá",
+      "familia": "floral",
+      "nueva": false,
+      "destacada": true,
+      "visible": true
+    },
+    {
+      "slug": "phuket",
+      "nombre": "Phuket",
+      "familia": "floral",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "kioto",
+      "nombre": "Kioto",
+      "familia": "floral",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    },
+    {
+      "slug": "santorini",
+      "nombre": "Santorini",
+      "familia": "floral",
+      "nueva": false,
+      "destacada": false,
+      "visible": true
+    }
+  ],
+  "trabajos": [
+    {
+      "slug": "instalacion-ikat",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Colgando un tapiz de ikat rojo y ocre enmarcado en madera natural en un pasillo blanco",
+          "pie": "Tánger, recién colgado"
+        },
+        "en": {
+          "alt": "Hanging a red and ochre ikat piece in a natural wood frame in a white hallway",
+          "pie": "Tánger, just hung"
+        },
+        "de": {
+          "alt": "Ein rot-ockerfarbenes Ikat-Stoffbild in Naturholzrahmen wird in einem weißen Flur aufgehängt",
+          "pie": "Tánger, frisch aufgehängt"
+        },
+        "fr": {
+          "alt": "Accrochage d’un tableau ikat rouge et ocre au cadre en bois naturel dans un couloir blanc",
+          "pie": "Tánger, tout juste accroché"
+        }
+      }
+    },
+    {
+      "slug": "diptico-salon",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Díptico de ikat verde sobre un sofá beige",
+          "pie": "Díptico Katmandú en un salón"
+        },
+        "en": {
+          "alt": "Green ikat diptych above a beige sofa",
+          "pie": "Katmandú diptych in a living room"
+        },
+        "de": {
+          "alt": "Grünes Ikat-Diptychon über einem beigen Sofa",
+          "pie": "Diptychon Katmandú im Wohnzimmer"
+        },
+        "fr": {
+          "alt": "Diptyque ikat vert au-dessus d’un canapé beige",
+          "pie": "Diptyque Katmandú dans un salon"
+        }
+      }
+    },
+    {
+      "slug": "flores-aparte",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz floral enmarcado en la pared de la floristería Flores Aparte, rodeado de flores",
+          "pie": "Nuestro muestrario en Flores Aparte"
+        },
+        "en": {
+          "alt": "Framed floral piece on the wall of the Flores Aparte flower shop, surrounded by flowers",
+          "pie": "Our sample corner at Flores Aparte"
+        },
+        "de": {
+          "alt": "Gerahmtes Blumen-Stoffbild an der Wand des Blumenladens Flores Aparte, umgeben von Blumen",
+          "pie": "Unsere Musterecke bei Flores Aparte"
+        },
+        "fr": {
+          "alt": "Tableau fleuri encadré au mur de la boutique de fleurs Flores Aparte, entouré de fleurs",
+          "pie": "Notre coin d’échantillons chez Flores Aparte"
+        }
+      }
+    },
+    {
+      "slug": "habana-dormitorio",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz de palmeras y sombrillas sobre el cabecero de una cama",
+          "pie": "Habana sobre un cabecero"
+        },
+        "en": {
+          "alt": "Palm tree and parasol print above a bed headboard",
+          "pie": "Habana above a headboard"
+        },
+        "de": {
+          "alt": "Stoffbild mit Palmen und Sonnenschirmen über einem Bettkopfteil",
+          "pie": "Habana über dem Bett"
+        },
+        "fr": {
+          "alt": "Tableau à motif de palmiers et d’ombrelles au-dessus d’une tête de lit",
+          "pie": "Habana au-dessus d’un lit"
+        }
+      }
+    },
+    {
+      "slug": "diptico-dormitorio",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Dos tapices de ikat verde y teja sobre una cama con cojines de ikat",
+          "pie": "Díptico Atenas en un dormitorio"
+        },
+        "en": {
+          "alt": "Two green and terracotta ikat pieces above a bed with ikat cushions",
+          "pie": "Atenas diptych in a bedroom"
+        },
+        "de": {
+          "alt": "Zwei grün-terrakottafarbene Ikat-Stoffbilder über einem Bett mit Ikat-Kissen",
+          "pie": "Diptychon Atenas im Schlafzimmer"
+        },
+        "fr": {
+          "alt": "Deux tableaux ikat vert et terracotta au-dessus d’un lit avec des coussins ikat",
+          "pie": "Diptyque Atenas dans une chambre"
+        }
+      }
+    },
+    {
+      "slug": "ikat-verde-infantil",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz de ikat verde bajo una cabeza de caballo de mimbre en una habitación infantil",
+          "pie": "Katmandú en una habitación infantil"
+        },
+        "en": {
+          "alt": "Green ikat piece under a wicker horse head in a child’s room",
+          "pie": "Katmandú in a child’s room"
+        },
+        "de": {
+          "alt": "Grünes Ikat-Stoffbild unter einem Pferdekopf aus Korb im Kinderzimmer",
+          "pie": "Katmandú im Kinderzimmer"
+        },
+        "fr": {
+          "alt": "Tableau ikat vert sous une tête de cheval en osier dans une chambre d’enfant",
+          "pie": "Katmandú dans une chambre d’enfant"
+        }
+      }
+    },
+    {
+      "slug": "granada-recibidor",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz de ikat verde agua y rosa sobre una consola de madera",
+          "pie": "Granada en un recibidor"
+        },
+        "en": {
+          "alt": "Teal and pink ikat piece above a wooden console table",
+          "pie": "Granada in an entryway"
+        },
+        "de": {
+          "alt": "Ikat-Stoffbild in Türkis und Rosa über einer Holzkonsole",
+          "pie": "Granada im Eingangsbereich"
+        },
+        "fr": {
+          "alt": "Tableau ikat vert d’eau et rose au-dessus d’une console en bois",
+          "pie": "Granada dans une entrée"
+        }
+      }
+    },
+    {
+      "slug": "osaka-cocina",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz floral rojo enmarcado en una cocina de madera clara",
+          "pie": "Osaka en la cocina"
+        },
+        "en": {
+          "alt": "Framed red floral piece in a light wood kitchen",
+          "pie": "Osaka in the kitchen"
+        },
+        "de": {
+          "alt": "Gerahmtes rotes Blumen-Stoffbild in einer Küche aus hellem Holz",
+          "pie": "Osaka in der Küche"
+        },
+        "fr": {
+          "alt": "Tableau fleuri rouge encadré dans une cuisine en bois clair",
+          "pie": "Osaka dans la cuisine"
+        }
+      }
+    },
+    {
+      "slug": "ubud-dormitorio",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz de garzas y árboles sobre una cama blanca bajo un arco",
+          "pie": "Ubud en un dormitorio"
+        },
+        "en": {
+          "alt": "Heron and tree print above a white bed under an arch",
+          "pie": "Ubud in a bedroom"
+        },
+        "de": {
+          "alt": "Stoffbild mit Reihern und Bäumen über einem weißen Bett unter einem Bogen",
+          "pie": "Ubud im Schlafzimmer"
+        },
+        "fr": {
+          "alt": "Tableau de hérons et d’arbres au-dessus d’un lit blanc sous une arche",
+          "pie": "Ubud dans une chambre"
+        }
+      }
+    },
+    {
+      "slug": "londres-estante",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz verde salvia con flores pequeñas apoyado en una repisa de madera",
+          "pie": "Londres"
+        },
+        "en": {
+          "alt": "Sage green piece with small flowers leaning on a wooden shelf",
+          "pie": "Londres"
+        },
+        "de": {
+          "alt": "Salbeigrünes Stoffbild mit kleinen Blumen, an ein Holzregal gelehnt",
+          "pie": "Londres"
+        },
+        "fr": {
+          "alt": "Tableau vert sauge à petites fleurs posé sur une étagère en bois",
+          "pie": "Londres"
+        }
+      }
+    },
+    {
+      "slug": "cadiz-diptico",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Díptico floral azul y ocre sobre un sofá frente al mar",
+          "pie": "Díptico Cádiz"
+        },
+        "en": {
+          "alt": "Blue and ochre floral diptych above a sofa facing the sea",
+          "pie": "Cádiz diptych"
+        },
+        "de": {
+          "alt": "Blau-ockerfarbenes Blumen-Diptychon über einem Sofa mit Meerblick",
+          "pie": "Diptychon Cádiz"
+        },
+        "fr": {
+          "alt": "Diptyque fleuri bleu et ocre au-dessus d’un canapé face à la mer",
+          "pie": "Diptyque Cádiz"
+        }
+      }
+    },
+    {
+      "slug": "valencia-bano",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz de granadas en un baño de tonos arena",
+          "pie": "Valencia en un baño"
+        },
+        "en": {
+          "alt": "Pomegranate print in a sand-coloured bathroom",
+          "pie": "Valencia in a bathroom"
+        },
+        "de": {
+          "alt": "Stoffbild mit Granatäpfeln in einem sandfarbenen Bad",
+          "pie": "Valencia im Bad"
+        },
+        "fr": {
+          "alt": "Tableau à motif de grenades dans une salle de bains couleur sable",
+          "pie": "Valencia dans une salle de bains"
+        }
+      }
+    },
+    {
+      "slug": "tulum-comedor",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Dos tapices de ikat gris en un comedor con lámpara de mimbre",
+          "pie": "Díptico Tulum en un comedor"
+        },
+        "en": {
+          "alt": "Two grey ikat pieces in a dining room with a wicker lamp",
+          "pie": "Tulum diptych in a dining room"
+        },
+        "de": {
+          "alt": "Zwei graue Ikat-Stoffbilder in einem Esszimmer mit Korblampe",
+          "pie": "Diptychon Tulum im Esszimmer"
+        },
+        "fr": {
+          "alt": "Deux tableaux ikat gris dans une salle à manger avec une suspension en osier",
+          "pie": "Diptyque Tulum dans une salle à manger"
+        }
+      }
+    },
+    {
+      "slug": "katmandu-patio",
+      "producto": "tapiz",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Tapiz de ikat verde en la pared encalada de un patio",
+          "pie": "Katmandú en un patio"
+        },
+        "en": {
+          "alt": "Green ikat piece on the whitewashed wall of a patio",
+          "pie": "Katmandú in a patio"
+        },
+        "de": {
+          "alt": "Grünes Ikat-Stoffbild an der gekalkten Wand eines Innenhofs",
+          "pie": "Katmandú im Innenhof"
+        },
+        "fr": {
+          "alt": "Tableau ikat vert sur le mur blanchi à la chaux d’un patio",
+          "pie": "Katmandú dans un patio"
+        }
+      }
+    },
+    {
+      "slug": "cuadritos-aparador",
+      "producto": "cuadrito",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Cuatro cuadritos con láminas religiosas sobre telas estampadas, apoyados en un aparador de madera",
+          "pie": "Cuadritos sobre un aparador"
+        },
+        "en": {
+          "alt": "Four small frames with religious prints on patterned fabrics, leaning on a wooden sideboard",
+          "pie": "Small frames on a sideboard"
+        },
+        "de": {
+          "alt": "Vier kleine Bilder mit religiösen Motiven auf gemusterten Stoffen, an eine Holzanrichte gelehnt",
+          "pie": "Kleine Bilder auf einer Anrichte"
+        },
+        "fr": {
+          "alt": "Quatre petits cadres avec des images religieuses sur tissus imprimés, posés sur un buffet en bois",
+          "pie": "Petits cadres sur un buffet"
+        }
+      }
+    },
+    {
+      "slug": "cuadrito-nacimiento",
+      "producto": "cuadrito",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Cuadrito del Sagrado Corazón impreso en tela sobre rayas teja, entre dos figuras de un belén",
+          "pie": "Sagrado Corazón impreso en tela"
+        },
+        "en": {
+          "alt": "Small frame with the Sacred Heart printed on fabric over terracotta stripes, between two nativity figures",
+          "pie": "Sacred Heart printed on fabric"
+        },
+        "de": {
+          "alt": "Kleines Bild mit dem Heiligsten Herzen auf Stoff gedruckt, auf terrakottafarbenen Streifen, zwischen zwei Krippenfiguren",
+          "pie": "Heiligstes Herz, auf Stoff gedruckt"
+        },
+        "fr": {
+          "alt": "Petit cadre du Sacré-Cœur imprimé sur tissu, sur rayures terracotta, entre deux santons de crèche",
+          "pie": "Sacré-Cœur imprimé sur tissu"
+        }
+      }
+    },
+    {
+      "slug": "cuadrito-madre",
+      "producto": "cuadrito",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Cuadrito de una mujer embarazada sobre tela de flores verdes, encima de una cómoda con cestas",
+          "pie": "Madre sobre flores verdes"
+        },
+        "en": {
+          "alt": "Small frame with a pregnant woman on green floral fabric, on top of a chest with baskets",
+          "pie": "Mother on green flowers"
+        },
+        "de": {
+          "alt": "Kleines Bild einer Schwangeren auf grünem Blumenstoff, auf einer Kommode mit Körben",
+          "pie": "Mutter auf grünen Blumen"
+        },
+        "fr": {
+          "alt": "Petit cadre d’une femme enceinte sur tissu à fleurs vertes, sur une commode à paniers",
+          "pie": "Mère sur fleurs vertes"
+        }
+      }
+    },
+    {
+      "slug": "cuadrito-desamparados",
+      "producto": "cuadrito",
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "Cuadrito de la Virgen de los Desamparados sobre tela de hojas malva, en un taburete junto a una vela",
+          "pie": "Virgen de los Desamparados"
+        },
+        "en": {
+          "alt": "Small frame with Our Lady of the Forsaken on mauve leaf fabric, on a stool next to a candle",
+          "pie": "Our Lady of the Forsaken"
+        },
+        "de": {
+          "alt": "Kleines Bild der Jungfrau der Verlassenen auf malvenfarbenem Blätterstoff, auf einem Hocker neben einer Kerze",
+          "pie": "Jungfrau der Verlassenen"
+        },
+        "fr": {
+          "alt": "Petit cadre de Notre-Dame des Abandonnés sur tissu à feuilles mauves, sur un tabouret près d’une bougie",
+          "pie": "Notre-Dame des Abandonnés"
+        }
+      }
+    },
+    {
+      "slug": "bogota-aparador",
+      "producto": null,
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "",
+          "pie": ""
+        },
+        "en": {
+          "alt": "",
+          "pie": ""
+        },
+        "de": {
+          "alt": "",
+          "pie": ""
+        },
+        "fr": {
+          "alt": "",
+          "pie": ""
+        }
+      }
+    },
+    {
+      "slug": "bogota-diptico",
+      "producto": null,
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "",
+          "pie": ""
+        },
+        "en": {
+          "alt": "",
+          "pie": ""
+        },
+        "de": {
+          "alt": "",
+          "pie": ""
+        },
+        "fr": {
+          "alt": "",
+          "pie": ""
+        }
+      }
+    },
+    {
+      "slug": "cairo-banco",
+      "producto": null,
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "",
+          "pie": ""
+        },
+        "en": {
+          "alt": "",
+          "pie": ""
+        },
+        "de": {
+          "alt": "",
+          "pie": ""
+        },
+        "fr": {
+          "alt": "",
+          "pie": ""
+        }
+      }
+    },
+    {
+      "slug": "detalle-bogota",
+      "producto": null,
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "",
+          "pie": ""
+        },
+        "en": {
+          "alt": "",
+          "pie": ""
+        },
+        "de": {
+          "alt": "",
+          "pie": ""
+        },
+        "fr": {
+          "alt": "",
+          "pie": ""
+        }
+      }
+    },
+    {
+      "slug": "habana-pared-verde",
+      "producto": null,
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "",
+          "pie": ""
+        },
+        "en": {
+          "alt": "",
+          "pie": ""
+        },
+        "de": {
+          "alt": "",
+          "pie": ""
+        },
+        "fr": {
+          "alt": "",
+          "pie": ""
+        }
+      }
+    },
+    {
+      "slug": "osaka-mesa",
+      "producto": null,
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "",
+          "pie": ""
+        },
+        "en": {
+          "alt": "",
+          "pie": ""
+        },
+        "de": {
+          "alt": "",
+          "pie": ""
+        },
+        "fr": {
+          "alt": "",
+          "pie": ""
+        }
+      }
+    },
+    {
+      "slug": "terraza",
+      "producto": null,
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "",
+          "pie": ""
+        },
+        "en": {
+          "alt": "",
+          "pie": ""
+        },
+        "de": {
+          "alt": "",
+          "pie": ""
+        },
+        "fr": {
+          "alt": "",
+          "pie": ""
+        }
+      }
+    },
+    {
+      "slug": "valencia-salon",
+      "producto": null,
+      "visible": true,
+      "textos": {
+        "es": {
+          "alt": "",
+          "pie": ""
+        },
+        "en": {
+          "alt": "",
+          "pie": ""
+        },
+        "de": {
+          "alt": "",
+          "pie": ""
+        },
+        "fr": {
+          "alt": "",
+          "pie": ""
+        }
+      }
+    }
+  ],
+  "cuadrito": {
+    "telas": [
+      {
+        "slug": "flores-verdes",
+        "nombres": {
+          "es": "Flores verdes",
+          "en": "Green flowers",
+          "de": "Grüne Blumen",
+          "fr": "Fleurs vertes"
+        },
+        "visible": true
+      },
+      {
+        "slug": "rayas-teja",
+        "nombres": {
+          "es": "Rayas teja",
+          "en": "Terracotta stripes",
+          "de": "Terrakotta-Streifen",
+          "fr": "Rayures terracotta"
+        },
+        "visible": true
+      },
+      {
+        "slug": "hojas-malva",
+        "nombres": {
+          "es": "Hojas malva",
+          "en": "Mauve leaves",
+          "de": "Malvenblätter",
+          "fr": "Feuilles mauves"
+        },
+        "visible": true
+      },
+      {
+        "slug": "ramitas-mostaza",
+        "nombres": {
+          "es": "Ramitas mostaza",
+          "en": "Mustard sprigs",
+          "de": "Senfranken",
+          "fr": "Brins moutarde"
+        },
+        "visible": true
+      },
+      {
+        "slug": "granadas",
+        "nombres": {
+          "es": "Granadas",
+          "en": "Pomegranates",
+          "de": "Granatäpfel",
+          "fr": "Grenades"
+        },
+        "visible": true
+      },
+      {
+        "slug": "rayas-azules",
+        "nombres": {
+          "es": "Rayas azules",
+          "en": "Blue stripes",
+          "de": "Blaue Streifen",
+          "fr": "Rayures bleues"
+        },
+        "visible": true
+      }
+    ],
+    "disenos": [
+      {
+        "slug": "sagrado-corazon",
+        "nombres": {
+          "es": "Sagrado Corazón",
+          "en": "Sacred Heart",
+          "de": "Heiligstes Herz",
+          "fr": "Sacré-Cœur"
+        },
+        "visible": true
+      },
+      {
+        "slug": "desamparados",
+        "nombres": {
+          "es": "Virgen de los Desamparados",
+          "en": "Our Lady of the Forsaken",
+          "de": "Jungfrau der Verlassenen",
+          "fr": "Notre-Dame des Abandonnés"
+        },
+        "visible": true
+      },
+      {
+        "slug": "madre",
+        "nombres": {
+          "es": "Madre",
+          "en": "Mother",
+          "de": "Mutter",
+          "fr": "Mère"
+        },
+        "visible": true
+      },
+      {
+        "slug": "pilar",
+        "nombres": {
+          "es": "Virgen del Pilar",
+          "en": "Our Lady of the Pillar",
+          "de": "Jungfrau vom Pfeiler",
+          "fr": "Notre-Dame du Pilier"
+        },
+        "visible": true
+      }
+    ]
+  },
+  "precios": {
+    "tamanos": [
+      {
+        "ancho": 40,
+        "alto": 60,
+        "precio": 80
+      },
+      {
+        "ancho": 50,
+        "alto": 50,
+        "precio": 80
+      },
+      {
+        "ancho": 50,
+        "alto": 70,
+        "precio": 90
+      },
+      {
+        "ancho": 60,
+        "alto": 60,
+        "precio": 90
+      },
+      {
+        "ancho": 60,
+        "alto": 90,
+        "precio": 110
+      },
+      {
+        "ancho": 70,
+        "alto": 80,
+        "precio": 110
+      },
+      {
+        "ancho": 70,
+        "alto": 100,
+        "precio": 130
+      },
+      {
+        "ancho": 80,
+        "alto": 90,
+        "precio": 130
+      }
+    ],
+    "enmarcado": 30,
+    "diptico": 0.25,
+    "impresiones": {
+      "papel": 20,
+      "tela": 25
+    }
+  }
+}
